@@ -275,12 +275,22 @@
             // Live Evaluation Formula Injection
             const tText = evT === 'any' ? 'Marginal' : evT.toUpperCase();
             const dText = evD === 'any' ? 'Marginal' : evD.toUpperCase();
-            const pText = evP === 'any' ? 'Calculated' : evP.toUpperCase();
-            const liveNetFormula = `P(T\\!=\\!${tText},\\, D\\!=\\!${dText},\\, P\\!=\\!${pText}) \\Rightarrow P(Purchase) = ${(finalPurchase * 100).toFixed(1)}\\%`;
+            
+            // Calculate the exact numerator (Purchase = True) and denominator (Total valid evidence space)
+            const numerator = (finalPurchase * totalAlphaNorm).toFixed(4);
+            const denominator = totalAlphaNorm.toFixed(4);
+
+            // Build a transparent equation showing the fraction
+            const liveNetFormula = `P(\\text{Purchase}=\\text{Yes} \\mid \\text{Evidence}) = \\frac{${numerator}}{${denominator}} = ${(finalPurchase * 100).toFixed(1)}\\%`;
+            
             netEqContainer.innerHTML = `$$${liveNetFormula}$$`;
 
+            // Optional: Update the static text above the equation to explain the fraction
+            const staticEqText = netEqContainer.previousElementSibling;
+            staticEqText.innerHTML = `$\\text{Inference} = \\frac{\\sum P(\\text{Purchase}=\\text{Yes}, \\text{Matching Evidence})}{\\sum P(\\text{Matching Evidence})}$`;
+
             if (window.MathJax && window.MathJax.typesetPromise) {
-                MathJax.typesetPromise([netEqContainer]);
+                MathJax.typesetPromise([netEqContainer, staticEqText]);
             }
         }
 

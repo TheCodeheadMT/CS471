@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bayesian Network & Decision Simulator</title>
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script>
       window.MathJax = { tex: { inlineMath: [['$', '$']], displayMath: [['$$', '$$']] } };
@@ -32,13 +32,10 @@
                     <i data-lucide="network" class="w-5 h-5"></i> Understanding Bayesian Networks
                 </h2>
                 <p class="text-gray-300 text-sm leading-relaxed">
-                    A Bayesian Network tracks cause-and-effect relationships. Unlike a simple calculator, changing a node at the bottom (an effect) allows the network to perform <strong>inference</strong> to guess the state of the nodes at the top (the causes). 
-                </p>
-                <p class="text-gray-400 text-xs mt-2 italic">
-                    Scenario: We want to classify whether a web visitor will **"Purchase"** based on their **"Traffic Source"** (Organic vs Paid Ad) and if they view a **"Discount Page"**.
+                    A Bayesian Network tracks cause-and-effect relationships. Changing a node at the bottom (an effect) allows the network to perform <strong>inference</strong> to guess the state of the nodes at the top (the causes). 
                 </p>
             </div>
-            <div class="bg-gray-900 p-4 rounded-lg border border-gray-800 flex flex-col justify-center text-xs font-mono text-indigo-300 space-y-1">
+            <div class="bg-gray-900 p-4 rounded-lg border border-gray-800 flex flex-col justify-center text-xs font-mono text-indigo-300 space-y-1 overflow-x-auto">
                 <div class="text-white font-bold mb-1">Joint Probability Definition:</div>
                 <div>$P(T, D, P) = P(T) \cdot P(D) \cdot P(P|T, D)$</div>
             </div>
@@ -55,7 +52,7 @@
                             <span class="text-gray-300 font-medium">P(Traffic = Paid Ad)</span>
                             <span id="val-pt" class="text-indigo-400 font-bold">50%</span>
                         </div>
-                        <input type="range" id="param-pt" min="0" max="100" value="50" class="w-full h-1.5 bg-gray-700 accent-indigo-500 rounded">
+                        <input type="range" id="param-pt" min="0" max="100" value="50" class="w-full h-1.5 bg-gray-700 accent-indigo-500 rounded cursor-pointer">
                     </div>
 
                     <div>
@@ -63,7 +60,7 @@
                             <span class="text-gray-300 font-medium">P(Views Discount Page)</span>
                             <span id="val-pd" class="text-indigo-400 font-bold">30%</span>
                         </div>
-                        <input type="range" id="param-pd" min="0" max="100" value="30" class="w-full h-1.5 bg-gray-700 accent-indigo-500 rounded">
+                        <input type="range" id="param-pd" min="0" max="100" value="30" class="w-full h-1.5 bg-gray-700 accent-indigo-500 rounded cursor-pointer">
                     </div>
 
                     <div class="border-t border-gray-700/50 pt-2 my-2">
@@ -72,92 +69,82 @@
 
                     <div class="space-y-3 text-xs">
                         <div>
-                            <div class="flex justify-between mb-1">
-                                <span>P(Purchase | Organic, No Discount)</span>
-                                <span id="val-p1" class="text-emerald-400 font-bold">5%</span>
-                            </div>
-                            <input type="range" id="param-p1" min="0" max="100" value="5" class="w-full h-1 bg-gray-700 accent-emerald-500 rounded">
+                            <div class="flex justify-between mb-1"><span>P(Purchase | Organic, No Discount)</span><span id="val-p1" class="text-emerald-400 font-bold">5%</span></div>
+                            <input type="range" id="param-p1" min="0" max="100" value="5" class="w-full h-1.5 bg-gray-700 accent-emerald-500 rounded cursor-pointer">
                         </div>
                         <div>
-                            <div class="flex justify-between mb-1">
-                                <span>P(Purchase | Paid Ad, No Discount)</span>
-                                <span id="val-p2" class="text-emerald-400 font-bold">20%</span>
-                            </div>
-                            <input type="range" id="param-p2" min="0" max="100" value="20" class="w-full h-1 bg-gray-700 accent-emerald-500 rounded">
+                            <div class="flex justify-between mb-1"><span>P(Purchase | Paid Ad, No Discount)</span><span id="val-p2" class="text-emerald-400 font-bold">20%</span></div>
+                            <input type="range" id="param-p2" min="0" max="100" value="20" class="w-full h-1.5 bg-gray-700 accent-emerald-500 rounded cursor-pointer">
                         </div>
                         <div>
-                            <div class="flex justify-between mb-1">
-                                <span>P(Purchase | Organic, Has Discount)</span>
-                                <span id="val-p3" class="text-emerald-400 font-bold">40%</span>
-                            </div>
-                            <input type="range" id="param-p3" min="0" max="100" value="40" class="w-full h-1 bg-gray-700 accent-emerald-500 rounded">
+                            <div class="flex justify-between mb-1"><span>P(Purchase | Organic, Has Discount)</span><span id="val-p3" class="text-emerald-400 font-bold">40%</span></div>
+                            <input type="range" id="param-p3" min="0" max="100" value="40" class="w-full h-1.5 bg-gray-700 accent-emerald-500 rounded cursor-pointer">
                         </div>
                         <div>
-                            <div class="flex justify-between mb-1">
-                                <span>P(Purchase | Paid Ad, Has Discount)</span>
-                                <span id="val-p4" class="text-emerald-400 font-bold">85%</span>
-                            </div>
-                            <input type="range" id="param-p4" min="0" max="100" value="85" class="w-full h-1 bg-gray-700 accent-emerald-500 rounded">
+                            <div class="flex justify-between mb-1"><span>P(Purchase | Paid Ad, Has Discount)</span><span id="val-p4" class="text-emerald-400 font-bold">85%</span></div>
+                            <input type="range" id="param-p4" min="0" max="100" value="85" class="w-full h-1.5 bg-gray-700 accent-emerald-500 rounded cursor-pointer">
                         </div>
                     </div>
                 </div>
 
                 <div class="bg-gray-800/60 border border-gray-800 rounded-xl p-5 space-y-4">
                     <h3 class="text-sm font-bold text-white uppercase tracking-wider border-b border-gray-700 pb-2">2. Live Evidence Observations</h3>
-                    <p class="text-xs text-gray-400">Lock in observations to see how remaining nodes respond.</p>
-                    
                     <div class="grid grid-cols-2 gap-2 text-xs">
                         <div>
                             <label class="block text-gray-400 mb-1">Traffic Observed:</label>
-                            <select id="obs-traffic" class="w-full bg-gray-900 border border-gray-700 rounded p-1.5 text-white">
-                                <option value="any">Unknown (Marginal)</option>
+                            <select id="obs-traffic" class="w-full bg-gray-900 border border-gray-700 rounded p-1.5 text-white cursor-pointer">
+                                <option value="any">Unknown</option>
                                 <option value="organic">Organic</option>
                                 <option value="paid">Paid Ad</option>
                             </select>
                         </div>
                         <div>
                             <label class="block text-gray-400 mb-1">Discount Observed:</label>
-                            <select id="obs-discount" class="w-full bg-gray-900 border border-gray-700 rounded p-1.5 text-white">
-                                <option value="any">Unknown (Marginal)</option>
+                            <select id="obs-discount" class="w-full bg-gray-900 border border-gray-700 rounded p-1.5 text-white cursor-pointer">
+                                <option value="any">Unknown</option>
                                 <option value="no">No Discount</option>
                                 <option value="yes">Has Discount</option>
                             </select>
                         </div>
                     </div>
-                    
                     <div>
-                        <label class="block text-xs text-gray-400 mb-1">Purchase Outcome Observed (Inverse Inference):</label>
-                        <select id="obs-purchase" class="w-full bg-gray-900 border border-gray-700 rounded p-1.5 text-white text-xs">
-                            <option value="any">Unknown (Forward Classification Mode)</option>
-                            <option value="yes">Observed: Customer Purchased</option>
-                            <option value="no">Observed: Customer Abandoned Cart</option>
+                        <label class="block text-xs text-gray-400 mb-1">Purchase Outcome Observed:</label>
+                        <select id="obs-purchase" class="w-full bg-gray-900 border border-gray-700 rounded p-1.5 text-white text-xs cursor-pointer">
+                            <option value="any">Unknown (Forward Classification)</option>
+                            <option value="yes">Observed: Purchased</option>
+                            <option value="no">Observed: Abandoned</option>
                         </select>
                     </div>
                 </div>
             </div>
 
             <div class="lg:col-span-8 flex flex-col space-y-6">
-                <div class="bg-gray-950 border border-gray-800 rounded-xl p-4 relative flex-1 min-h-[450px] flex flex-col justify-between">
-                    <div>
-                        <div class="flex justify-between items-center mb-2">
-                            <h3 class="text-sm font-bold text-white">Dynamic Probability Flow Map</h3>
-                            <span class="text-[10px] bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 px-2 py-0.5 rounded-full animate-pulse">Live Inference Engine</span>
-                        </div>
-                        <canvas id="networkCanvas" class="w-full bg-gray-900/50 rounded-lg border border-gray-800" height="380"></canvas>
+                <div class="bg-gray-950 border border-gray-800 rounded-xl p-4 relative flex-1 min-h-[450px] flex flex-col justify-between overflow-hidden">
+                    <div class="w-full flex-1">
+                        <canvas id="networkCanvas" class="w-full h-full bg-gray-900/50 rounded-lg border border-gray-800 min-h-[250px]"></canvas>
                     </div>
                     
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4 bg-gray-900/60 p-4 rounded-lg border border-gray-800 text-xs">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4 bg-gray-900/60 p-4 rounded-lg border border-gray-800 text-xs shrink-0">
                         <div>
-                            <span class="text-gray-400 uppercase tracking-wider font-bold block text-[10px] mb-1">Target Classification Result</span>
+                            <span class="text-gray-400 uppercase font-bold block text-[10px] mb-1">Target Classification Result</span>
                             <div class="text-base font-bold text-white flex items-center gap-2">
                                 <span id="classification-badge" class="w-2.5 h-2.5 rounded-full bg-gray-400"></span>
                                 <span id="classification-text">Calculating...</span>
                             </div>
                         </div>
                         <div>
-                            <span class="text-gray-400 uppercase tracking-wider font-bold block text-[10px] mb-1">Automated System Decision</span>
-                            <div id="decision-text" class="text-sm font-mono font-bold text-amber-400">Evaluating evidence parameters...</div>
+                            <span class="text-gray-400 uppercase font-bold block text-[10px] mb-1">Automated System Decision</span>
+                            <div id="decision-text" class="text-sm font-mono font-bold text-amber-400">Evaluating...</div>
                         </div>
+                    </div>
+
+                    <div class="mt-4 bg-gray-900/60 p-4 rounded-lg border border-gray-800 text-xs font-mono shrink-0">
+                        <span class="text-gray-400 uppercase tracking-wider font-bold text-[10px] block mb-2">Active Joint Probability Configuration</span>
+                        <div class="text-center text-indigo-300 py-1 text-sm overflow-x-auto">
+                            $P(T, D, P) = P(T) \cdot P(D) \cdot P(P \mid T, D)$
+                        </div>
+                        <div id="network-equation-live" class="text-center text-white font-bold mt-2 pt-2 border-t border-gray-800/60 overflow-x-auto">
+                            </div>
                     </div>
                 </div>
             </div>
@@ -166,66 +153,58 @@
     </main>
 
     <script>
-        // Setup interactive elements
         const canvas = document.getElementById('networkCanvas');
         const ctx = canvas.getContext('2d');
-
-        // Parameter Sliders
         const pTSlider = document.getElementById('param-pt');
         const pDSlider = document.getElementById('param-pd');
         const p1Slider = document.getElementById('param-p1');
         const p2Slider = document.getElementById('param-p2');
         const p3Slider = document.getElementById('param-p3');
         const p4Slider = document.getElementById('param-p4');
-
-        // Labels
         const valPT = document.getElementById('val-pt');
         const valPD = document.getElementById('val-pd');
         const valP1 = document.getElementById('val-p1');
         const valP2 = document.getElementById('val-p2');
         const valP3 = document.getElementById('val-p3');
         const valP4 = document.getElementById('val-p4');
-
-        // Dropdowns
         const obsT = document.getElementById('obs-traffic');
         const obsD = document.getElementById('obs-discount');
         const obsP = document.getElementById('obs-purchase');
-
-        // UI Outputs
         const classBadge = document.getElementById('classification-badge');
         const classText = document.getElementById('classification-text');
         const decisionText = document.getElementById('decision-text');
+        const netEqContainer = document.getElementById('network-equation-live');
 
-        // Define Node Graph Positions for Layout Rendering
         const nodes = {
-            traffic: { x: 180, y: 80, label: "Traffic Source", valStr: "" },
-            discount: { x: 460, y: 80, label: "Discount Page", valStr: "" },
-            purchase: { x: 320, y: 280, label: "Purchase", valStr: "" }
+            traffic: { x: 180, y: 60, label: "Traffic Source", valStr: "" },
+            discount: { x: 460, y: 60, label: "Discount Page", valStr: "" },
+            purchase: { x: 320, y: 220, label: "Purchase", valStr: "" }
         };
 
-        // Network calculation variables
         let computedProbabilities = { trafficPaid: 0.5, discountYes: 0.3, purchaseYes: 0.1 };
 
         function resizeCanvas() {
+            // Ensure width is safely captured
             const rect = canvas.parentNode.getBoundingClientRect();
-            canvas.width = rect.width - 32;
+            if (rect.width > 0) {
+                canvas.width = rect.width;
+                canvas.height = rect.height || 300; 
+            }
         }
         window.addEventListener('resize', resizeCanvas);
-        resizeCanvas();
+        // Force an initial tight fit
+        setTimeout(resizeCanvas, 50);
 
         function calculateNetworkInference() {
-            // Read standard system CPT inputs
-            const p_T1 = pTSlider.value / 100; // P(Traffic = Paid)
+            const p_T1 = pTSlider.value / 100;
             const p_T0 = 1 - p_T1;
-            const p_D1 = pDSlider.value / 100; // P(Discount = Yes)
+            const p_D1 = pDSlider.value / 100;
             const p_D0 = 1 - p_D1;
+            const p_P_T0_D0 = p1Slider.value / 100;
+            const p_P_T1_D0 = p2Slider.value / 100;
+            const p_P_T0_D1 = p3Slider.value / 100;
+            const p_P_T1_D1 = p4Slider.value / 100;
 
-            const p_P_T0_D0 = p1Slider.value / 100; // P(Purc | Org, NoDisc)
-            const p_P_T1_D0 = p2Slider.value / 100; // P(Purc | Paid, NoDisc)
-            const p_P_T0_D1 = p3Slider.value / 100; // P(Purc | Org, Disc)
-            const p_P_T1_D1 = p4Slider.value / 100; // P(Purc | Paid, Disc)
-
-            // Update parameters display readouts
             valPT.innerText = pTSlider.value + "%";
             valPD.innerText = pDSlider.value + "%";
             valP1.innerText = p1Slider.value + "%";
@@ -233,38 +212,26 @@
             valP3.innerText = p3Slider.value + "%";
             valP4.innerText = p4Slider.value + "%";
 
-            // Evidence conditions
             const evT = obsT.value;
             const evD = obsD.value;
             const evP = obsP.value;
 
-            // Generate full joint distribution configuration
-            // Array layout: config combo elements
             const joint = [];
-            
-            // Loop all combinations to perform complete exact enumeration inference
-            [false, true].forEach(T => { // false=Organic, true=Paid
-                [false, true].forEach(D => { // false=No, true=Yes
-                    [false, true].forEach(P => { // false=No, true=Yes
-                        
-                        // Causal baseline components
+            [false, true].forEach(T => {
+                [false, true].forEach(D => {
+                    [false, true].forEach(P => {
                         let prob = (T ? p_T1 : p_T0) * (D ? p_D1 : p_D0);
-                        
-                        // Conditional target components
                         let condP = 0;
                         if (!T && !D) condP = p_P_T0_D0;
                         if (T && !D)  condP = p_P_T1_D0;
                         if (!T && D)  condP = p_P_T0_D1;
                         if (T && D)   condP = p_P_T1_D1;
-
                         prob *= (P ? condP : (1 - condP));
-
                         joint.push({ T, D, P, prob });
                     });
                 });
             });
 
-            // Apply evidence observation filters
             let filteredJoint = joint.filter(row => {
                 if (evT === 'organic' && row.T !== false) return false;
                 if (evT === 'paid' && row.T !== true) return false;
@@ -276,8 +243,6 @@
             });
 
             const totalAlphaNorm = filteredJoint.reduce((sum, row) => sum + row.prob, 0);
-
-            // Calculate final marginal posterior variables
             let finalPaid = 0, finalDiscount = 0, finalPurchase = 0;
 
             if (totalAlphaNorm > 0) {
@@ -288,49 +253,53 @@
                 });
             }
 
-            // Save states globally for canvas renderer loops
             computedProbabilities.trafficPaid = finalPaid;
             computedProbabilities.discountYes = finalDiscount;
             computedProbabilities.purchaseYes = finalPurchase;
 
-            // Render Dynamic Badges and text UI
             classText.innerText = `P(Purchase) = ${(finalPurchase * 100).toFixed(1)}%`;
             if (finalPurchase > 0.5) {
-                classBadge.className = "w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-sm shadow-emerald-400";
-                decisionText.innerText = "CLASSIFICATION: HIGH CONVERSION VENTURE. Action: Target system resources toward cross-selling.";
+                classBadge.className = "w-2.5 h-2.5 rounded-full bg-emerald-500";
+                decisionText.innerText = "HIGH LEAD CONVERSION: Target active system cross-selling.";
                 decisionText.className = "text-sm font-mono font-bold text-emerald-400";
-            } else if (finalPurchase > 0.15) {
-                classBadge.className = "w-2.5 h-2.5 rounded-full bg-amber-400 shadow-sm shadow-amber-400";
-                decisionText.innerText = "CLASSIFICATION: INDETERMINATE USER. Action: Deploy pop-up discount voucher alert.";
-                decisionText.className = "text-sm font-mono font-bold text-amber-400";
             } else {
-                classBadge.className = "w-2.5 h-2.5 rounded-full bg-rose-500 shadow-sm shadow-rose-500";
-                decisionText.innerText = "CLASSIFICATION: COLD LEAD. Action: Minimize active ad expenditure footprint.";
+                classBadge.className = "w-2.5 h-2.5 rounded-full bg-rose-500";
+                decisionText.innerText = "COLD / UNCERTAIN TRACK: Minimize active ad footprint.";
                 decisionText.className = "text-sm font-mono font-bold text-rose-500";
             }
 
-            // Dynamically alter layout logic indicators depending on UI selections
-            nodes.traffic.valStr = evT !== 'any' ? evT.toUpperCase() + " (FIXED)" : `Paid: ${(finalPaid*100).toFixed(0)}%`;
-            nodes.discount.valStr = evD !== 'any' ? (evD === 'yes' ? 'YES' : 'NO') + " (FIXED)" : `Yes: ${(finalDiscount*100).toFixed(0)}%`;
-            nodes.purchase.valStr = evP !== 'any' ? (evP === 'yes' ? 'PURCHASED' : 'ABANDONED') + " (FIXED)" : `Yes: ${(finalPurchase*100).toFixed(0)}%`;
+            nodes.traffic.valStr = evT !== 'any' ? evT.toUpperCase() : `Paid: ${(finalPaid*100).toFixed(0)}%`;
+            nodes.discount.valStr = evD !== 'any' ? evD.toUpperCase() : `Yes: ${(finalDiscount*100).toFixed(0)}%`;
+            nodes.purchase.valStr = evP !== 'any' ? evP.toUpperCase() : `Yes: ${(finalPurchase*100).toFixed(0)}%`;
+
+            // Live Evaluation Formula Injection
+            const tText = evT === 'any' ? 'Marginal' : evT.toUpperCase();
+            const dText = evD === 'any' ? 'Marginal' : evD.toUpperCase();
+            const pText = evP === 'any' ? 'Calculated' : evP.toUpperCase();
+            const liveNetFormula = `P(T\\!=\\!${tText},\\, D\\!=\\!${dText},\\, P\\!=\\!${pText}) \\Rightarrow P(Purchase) = ${(finalPurchase * 100).toFixed(1)}\\%`;
+            netEqContainer.innerHTML = `$$${liveNetFormula}$$`;
+
+            if (window.MathJax && window.MathJax.typesetPromise) {
+                MathJax.typesetPromise([netEqContainer]);
+            }
         }
 
-        // Canvas Rendering System Animation Loop
         let frameTicker = 0;
         function drawGraph() {
+            if(canvas.width === 0) resizeCanvas();
+            
             frameTicker += 0.5;
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-
+            
             // Re-adapt nodes map configuration if container scale changes
-            nodes.traffic.x = canvas.width * 0.28;
-            nodes.discount.x = canvas.width * 0.72;
+            nodes.traffic.x = canvas.width * 0.25;
+            nodes.discount.x = canvas.width * 0.75;
+            // Center the purchase node vertically as well
             nodes.purchase.x = canvas.width * 0.5;
+            nodes.purchase.y = canvas.height * 0.75;
 
-            // Draw Connection Flow Paths Arrows
             drawCausalArrow(nodes.traffic, nodes.purchase);
             drawCausalArrow(nodes.discount, nodes.purchase);
-
-            // Render Node Enclosures
             renderNodeCard(nodes.traffic, computedProbabilities.trafficPaid, "#6366f1");
             renderNodeCard(nodes.discount, computedProbabilities.discountYes, "#a855f7");
             renderNodeCard(nodes.purchase, computedProbabilities.purchaseYes, "#10b981");
@@ -339,76 +308,31 @@
         }
 
         function drawCausalArrow(fromNode, toNode) {
-            ctx.strokeStyle = '#4b5563';
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.moveTo(fromNode.x, fromNode.y + 35);
-            ctx.lineTo(toNode.x, toNode.y - 35);
-            ctx.stroke();
-
-            // Animated probability particles tracking pipeline flow direction
-            const dx = toNode.x - fromNode.x;
-            const dy = (toNode.y - 35) - (fromNode.y + 35);
+            ctx.strokeStyle = '#4b5563'; ctx.lineWidth = 2;
+            ctx.beginPath(); ctx.moveTo(fromNode.x, fromNode.y + 35); ctx.lineTo(toNode.x, toNode.y - 35); ctx.stroke();
+            const dx = toNode.x - fromNode.x, dy = (toNode.y - 35) - (fromNode.y + 35);
             const distance = Math.sqrt(dx*dx + dy*dy);
-            
-            const stepCount = 3;
-            for(let i=0; i<stepCount; i++) {
-                let offset = ((frameTicker + (i * (distance / stepCount))) % distance) / distance;
-                let px = fromNode.x + dx * offset;
-                let py = (fromNode.y + 35) + dy * offset;
-                
-                ctx.fillStyle = '#f59e0b';
-                ctx.beginPath();
-                ctx.arc(px, py, 3, 0, Math.PI * 2);
-                ctx.fill();
+            for(let i=0; i<2; i++) {
+                let offset = ((frameTicker + (i * (distance / 2))) % distance) / distance;
+                ctx.fillStyle = '#f59e0b'; ctx.beginPath();
+                ctx.arc(fromNode.x + dx * offset, (fromNode.y + 35) + dy * offset, 3, 0, Math.PI * 2); ctx.fill();
             }
         }
 
         function renderNodeCard(node, probabilityValue, AccentColor) {
-            ctx.save();
-            
-            // Outer Box shadow outline config setup
-            ctx.fillStyle = '#1e293b';
-            ctx.strokeStyle = '#334155';
-            ctx.lineWidth = 1.5;
-            
-            // Draw clean box rounded cards
-            const w = 170, h = 70;
-            ctx.beginPath();
-            ctx.roundRect(node.x - w/2, node.y - h/2, w, h, 8);
-            ctx.fill();
-            ctx.stroke();
-
-            // Accent side stripe bar decoration indicator
-            ctx.fillStyle = AccentColor;
-            ctx.beginPath();
-            ctx.roundRect(node.x - w/2, node.y - h/2, 5, h, {topLeft: 8, bottomLeft: 8});
-            ctx.fill();
-
-            // Text Labels drawing rendering implementations
-            ctx.fillStyle = '#f3f4f6';
-            ctx.font = 'bold 13px sans-serif';
-            ctx.textAlign = 'center';
-            ctx.fillText(node.label, node.x, node.y - 10);
-
-            ctx.fillStyle = '#9ca3af';
-            ctx.font = '12px font-mono, sans-serif';
-            ctx.fillText(node.valStr, node.x, node.y + 14);
-
-            // Mini internal visual simple horizontal fill status bar line
-            ctx.fillStyle = '#334155';
-            ctx.fillRect(node.x - 60, node.y + 22, 120, 4);
-            ctx.fillStyle = AccentColor;
-            ctx.fillRect(node.x - 60, node.y + 22, 120 * probabilityValue, 4);
-
-            ctx.restore();
+            ctx.fillStyle = '#1e293b'; ctx.strokeStyle = '#334155'; ctx.lineWidth = 1.5;
+            const w = 150, h = 60;
+            ctx.beginPath(); ctx.roundRect(node.x - w/2, node.y - h/2, w, h, 6); ctx.fill(); ctx.stroke();
+            ctx.fillStyle = AccentColor; ctx.fillRect(node.x - w/2, node.y - h/2, 4, h);
+            ctx.fillStyle = '#f3f4f6'; ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'center';
+            ctx.fillText(node.label, node.x, node.y - 6);
+            ctx.fillStyle = '#9ca3af'; ctx.font = '11px monospace';
+            ctx.fillText(node.valStr, node.x, node.y + 12);
         }
 
-        // Attach event change hooks configurations across targets
         const trackingTriggers = [pTSlider, pDSlider, p1Slider, p2Slider, p3Slider, p4Slider, obsT, obsD, obsP];
         trackingTriggers.forEach(element => element.addEventListener('input', calculateNetworkInference));
 
-        // Initial running triggers setup kickstarts loops configurations
         calculateNetworkInference();
         drawGraph();
         setTimeout(() => lucide.createIcons(), 200);

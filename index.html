@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My App Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="bg-gray-900 text-gray-100 font-sans min-h-screen flex flex-col">
+
+    <header class="border-b border-gray-800 bg-gray-900/80 backdrop-blur sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <i data-lucide="layout-dashboard" class="w-6 h-6 text-indigo-400"></i>
+                <span class="font-bold text-xl tracking-tight">DevHub</span>
+            </div>
+            <nav class="flex gap-4">
+                <a href="https://github.com/YOUR_USERNAME" target="_blank" class="text-gray-400 hover:text-white transition-colors">
+                    <i data-lucide="github" class="w-5 h-5"></i>
+                </a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div class="text-center mb-16">
+            <h1 class="text-4xl sm:text-5xl font-extrabold text-white mb-4 tracking-tight">
+                My Project Ecosystem
+            </h1>
+            <p class="text-lg text-gray-400 max-w-2xl mx-auto">
+                A collection of web applications, utilities, and experiments hosted entirely on GitHub Pages.
+            </p>
+        </div>
+
+        <div id="apps-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            </div>
+    </main>
+
+    <footer class="border-t border-gray-800 bg-gray-950 py-6 mt-12">
+        <div class="max-w-7xl mx-auto px-4 text-center text-sm text-gray-500">
+            &copy; 2026 Your Name. Built with HTML, Tailwind, and GitHub Pages.
+        </div>
+    </footer>
+
+    <script>
+        // 1. App Data Configuration
+        // Add, remove, or modify your apps here!
+        const apps = [
+            {
+                title: "Weather Tracker",
+                description: "A real-time weather application utilizing third-party APIs to track global forecasts.",
+                tags: ["JavaScript", "API", "Tailwind"],
+                liveUrl: "./weather-app/index.html", // Path if hosted in a subdirectory
+                repoUrl: "https://github.com/YOUR_USERNAME/weather-app",
+                icon: "cloud-sun"
+            },
+            {
+                title: "Markdown Previewer",
+                description: "A sleek, side-by-side markdown editor and renderer with syntax highlighting.",
+                tags: ["React", "Markdown", "CSS"],
+                liveUrl: "https://YOUR_USERNAME.github.io/markdown-previewer", // Path if hosted in a separate repo
+                repoUrl: "https://github.com/YOUR_USERNAME/markdown-previewer",
+                icon: "file-text"
+            },
+            {
+                title: "Task Master",
+                description: "A kanban-style project management tool with local storage persistence.",
+                tags: ["Vanilla JS", "LocalDocs"],
+                liveUrl: "./task-master/",
+                repoUrl: "https://github.com/YOUR_USERNAME/dashboard-repo",
+                icon: "trello"
+            }
+        ];
+
+        // 2. Render Cards Dynamically
+        const grid = document.getElementById('apps-grid');
+        
+        apps.forEach(app => {
+            const card = document.createElement('div');
+            card.className = "bg-gray-800/50 border border-gray-800 rounded-xl p-6 hover:border-indigo-500/50 transition-all duration-300 flex flex-col justify-between group hover:-translate-y-1 shadow-lg";
+            
+            // Generate tags HTML
+            const tagsHtml = app.tags.map(tag => 
+                `<span class="text-xs font-medium bg-gray-900 text-indigo-300 px-2.5 py-1 rounded-full border border-gray-700">${tag}</span>`
+            ).join('');
+
+            card.innerHTML = `
+                <div>
+                    <div class="w-12 h-12 bg-indigo-600/10 rounded-lg flex items-center justify-center text-indigo-400 mb-4 group-hover:bg-indigo-600 group-hover:text-white transition-colors duration-300">
+                        <i data-lucide="${app.icon}"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-2">${app.title}</h3>
+                    <p class="text-gray-400 text-sm leading-relaxed mb-4">${app.description}</p>
+                </div>
+                <div>
+                    <div class="flex flex-wrap gap-2 mb-6">
+                        ${tagsHtml}
+                    </div>
+                    <div class="flex items-center justify-between border-t border-gray-700/50 pt-4">
+                        <a href="${app.repoUrl}" target="_blank" class="text-sm text-gray-400 hover:text-white flex items-center gap-1 transition-colors">
+                            <i data-lucide="code" class="w-4 h-4"></i> Source
+                        </a>
+                        <a href="${app.liveUrl}" class="text-sm font-semibold text-indigo-400 hover:text-indigo-300 flex items-center gap-1 group-hover:translate-x-0.5 transition-transform">
+                            Launch App <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+                        </a>
+                    </div>
+                </div>
+            `;
+            grid.appendChild(card);
+        });
+
+        // Initialize Lucide icons after DOM manipulation
+        lucide.createIcons();
+    </script>
+</body>
+</html>

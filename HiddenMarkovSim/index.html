@@ -4,12 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Markov & Hidden Markov Simulator</title>
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script>
       window.MathJax = { tex: { inlineMath: [['$', '$']], displayMath: [['$$', '$$']] } };
     </script>
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        .hidden-tab { display: none; }
+    </style>
 </head>
 <body class="bg-gray-900 text-gray-100 font-sans min-h-screen">
 
@@ -23,10 +26,10 @@
     <main class="max-w-7xl mx-auto px-4 py-8">
         
         <div class="flex border-b border-gray-800 mb-8 space-x-4">
-            <button id="tab-btn-markov" onclick="switchTab('markov')" class="py-3 px-6 font-medium text-sm border-b-2 border-indigo-500 text-indigo-400 transition-all cursor-pointer">
+            <button id="tab-btn-markov" onclick="switchTab('markov')" class="py-3 px-6 font-medium text-sm border-b-2 border-indigo-500 text-indigo-400 cursor-pointer">
                 Standard Markov Chain
             </button>
-            <button id="tab-btn-hmm" onclick="switchTab('hmm')" class="py-3 px-6 font-medium text-sm border-b-2 border-transparent text-gray-400 hover:text-gray-200 transition-all cursor-pointer">
+            <button id="tab-btn-hmm" onclick="switchTab('hmm')" class="py-3 px-6 font-medium text-sm border-b-2 border-transparent text-gray-400 hover:text-gray-200 cursor-pointer">
                 Hidden Markov Model (HMM)
             </button>
         </div>
@@ -34,322 +37,234 @@
         <div id="content-markov" class="tab-content space-y-8">
             <header>
                 <h1 class="text-3xl font-extrabold text-white mb-2">Markov Chain Weather Simulation</h1>
-                <p class="text-gray-400">Model state transitions where the next state relies solely on the present condition.</p>
+                <p class="text-gray-400">Model state transitions based purely on the current state configuration rules.</p>
             </header>
-
-            <section class="bg-gray-800/40 border border-gray-800 rounded-xl p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div class="md:col-span-2">
-                    <h2 class="text-lg font-semibold text-indigo-400 mb-2 flex items-center gap-2">
-                        <i data-lucide="repeat" class="w-5 h-5"></i> The Markov Property
-                    </h2>
-                    <p class="text-gray-300 text-sm leading-relaxed">
-                        A first-order Markov Chain assumes memorylessness: the probability of moving to the next state depends *only* on the current state, not the sequence of events that preceded it.
-                    </p>
-                </div>
-                <div class="bg-gray-900 p-4 rounded-lg border border-gray-800 flex flex-col justify-center text-xs font-mono text-indigo-300">
-                    <div>$P(X_{t+1} = x \mid X_t = x_t, \dots, X_0 = x_0) = P(X_{t+1} = x \mid X_t = x_t)$</div>
-                </div>
-            </section>
 
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
                 <div class="lg:col-span-4 bg-gray-800/60 border border-gray-800 rounded-xl p-5 space-y-4">
                     <h3 class="text-sm font-bold text-white uppercase tracking-wider border-b border-gray-700 pb-2">Transition Matrix ($P$)</h3>
-                    <p class="text-xs text-gray-400">Adjust probabilities of changing weather tomorrow given today's condition.</p>
-                    
                     <div class="space-y-4 text-xs">
                         <div>
                             <div class="flex justify-between mb-1"><span>Sunny $\rightarrow$ Sunny</span><span id="lbl-ss" class="text-indigo-400 font-bold">70%</span></div>
-                            <input type="range" id="m-ss" min="0" max="100" value="70" class="w-full h-1 bg-gray-700 accent-indigo-500 rounded" oninput="normalizeMarkovRow('s')">
+                            <input type="range" id="m-ss" min="0" max="100" value="70" class="w-full h-1.5 bg-gray-700 accent-indigo-500 rounded cursor-pointer" oninput="normalizeMarkovRow('s')">
                         </div>
-                        <div>
-                            <div class="flex justify-between mb-1"><span>Sunny $\rightarrow$ Rainy (Auto-Calculated)</span><span id="lbl-sr" class="text-gray-400 font-bold">30%</span></div>
-                        </div>
+                        <div><div class="flex justify-between mb-1"><span class="text-gray-500">Sunny $\rightarrow$ Rainy (Auto)</span><span id="lbl-sr" class="text-gray-500 font-bold">30%</span></div></div>
                         <div class="border-t border-gray-700/50 my-2 pt-2"></div>
                         <div>
                             <div class="flex justify-between mb-1"><span>Rainy $\rightarrow$ Rainy</span><span id="lbl-rr" class="text-emerald-400 font-bold">60%</span></div>
-                            <input type="range" id="m-rr" min="0" max="100" value="60" class="w-full h-1 bg-gray-700 accent-emerald-500 rounded" oninput="normalizeMarkovRow('r')">
+                            <input type="range" id="m-rr" min="0" max="100" value="60" class="w-full h-1.5 bg-gray-700 accent-emerald-500 rounded cursor-pointer" oninput="normalizeMarkovRow('r')">
                         </div>
-                        <div>
-                            <div class="flex justify-between mb-1"><span>Rainy $\rightarrow$ Sunny (Auto-Calculated)</span><span id="lbl-rs" class="text-gray-400 font-bold">40%</span></div>
-                        </div>
+                        <div><div class="flex justify-between mb-1"><span class="text-gray-500">Rainy $\rightarrow$ Sunny (Auto)</span><span id="lbl-rs" class="text-gray-500 font-bold">40%</span></div></div>
                     </div>
-
-                    <button onclick="stepMarkov()" class="w-full mt-4 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2 px-4 rounded text-xs transition-colors flex items-center justify-center gap-2 cursor-pointer">
-                        <i data-lucide="play" class="w-4 h-4"></i> Simulate Next Day
+                    <button onclick="stepMarkov()" class="w-full mt-4 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2 rounded text-xs flex items-center justify-center gap-2 cursor-pointer transition-colors">
+                        <i data-lucide="play" class="w-4 h-4"></i> Step Next Day
                     </button>
                 </div>
 
-                <div class="lg:col-span-8 bg-gray-950 border border-gray-800 rounded-xl p-6 flex flex-col justify-between min-h-[400px]">
-                    <div>
-                        <h3 class="text-sm font-bold text-white mb-4">Live State Path Generation</h3>
-                        <canvas id="markovCanvas" class="w-full bg-gray-900/40 rounded-lg border border-gray-800" height="220"></canvas>
+                <div class="lg:col-span-8 bg-gray-950 border border-gray-800 rounded-xl p-6 min-h-[380px] flex flex-col justify-between">
+                    <div class="w-full relative min-h-[160px]">
+                        <canvas id="markovCanvas" class="absolute inset-0 w-full h-full bg-gray-900/40 rounded-lg border border-gray-800"></canvas>
                     </div>
                     <div class="bg-gray-900 p-4 rounded-lg border border-gray-800 mt-4 text-xs">
-                        <span class="text-gray-400 uppercase tracking-wider font-bold text-[10px] block mb-1">Simulated Sequence Ledger</span>
-                        <div id="markov-history" class="font-mono text-indigo-300 break-all text-sm tracking-widest">SUNNY</div>
+                        <span class="text-gray-400 font-bold text-[10px] block mb-1 uppercase tracking-wider">Sequence Ledger</span>
+                        <div id="markov-history" class="font-mono text-indigo-300 text-sm tracking-widest break-all">SUNNY</div>
+                    </div>
+                    <div class="bg-gray-900 p-4 rounded-lg border border-gray-800 mt-4 text-xs font-mono overflow-x-auto">
+                        <span class="text-gray-400 uppercase font-bold text-[10px] block mb-1">Active Transition Matrix Representation</span>
+                        <div id="markov-equation-live" class="text-center text-white text-sm py-1"></div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div id="content-hmm" class="tab-content hidden space-y-8">
+        <div id="content-hmm" class="tab-content hidden-tab space-y-8">
             <header>
                 <h1 class="text-3xl font-extrabold text-white mb-2">Hidden Markov Model (HMM)</h1>
-                <p class="text-gray-400">Decode hidden internal emotional states based purely on visible, emitted behaviors.</p>
+                <p class="text-gray-400">Decode hidden emotional tracks based on visible emission vectors.</p>
             </header>
-
-            <section class="bg-gray-800/40 border border-gray-800 rounded-xl p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div class="md:col-span-2">
-                    <h2 class="text-lg font-semibold text-purple-400 mb-2 flex items-center gap-2">
-                        <i data-lucide="eye-off" class="w-5 h-5"></i> Hidden States vs. Emissions
-                    </h2>
-                    <p class="text-gray-300 text-sm leading-relaxed">
-                        In an HMM, the true state configuration is completely <strong>hidden</strong> (e.g., Mood: Happy or Sad). You only observe visible <strong>emissions</strong> generated by those states (e.g., Ice Cream, Gaming, or Studying).
-                    </p>
-                </div>
-                <div class="bg-gray-900 p-4 rounded-lg border border-gray-800 flex flex-col justify-center text-xs font-mono text-purple-300">
-                    <div>Emission Matrix: $P(E_t \mid X_t)$</div>
-                    <div>Transition Matrix: $P(X_t \mid X_{t-1})$</div>
-                </div>
-            </section>
 
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
                 <div class="lg:col-span-4 bg-gray-800/60 border border-gray-800 rounded-xl p-5 space-y-4">
-                    <h3 class="text-sm font-bold text-white uppercase tracking-wider border-b border-gray-700 pb-2">Emission Probabilities</h3>
-                    <p class="text-xs text-gray-400">What does a person do based on their hidden internal mood?</p>
-                    
+                    <h3 class="text-sm font-bold text-white uppercase tracking-wider border-b border-gray-700 pb-2">Emission Matrix</h3>
                     <div class="space-y-4 text-xs">
                         <div>
-                            <span class="text-purple-400 font-semibold block mb-1">When Hidden State = HAPPY:</span>
+                            <span class="text-purple-400 font-semibold block mb-1">When Hidden = HAPPY:</span>
                             <div class="flex justify-between mb-1"><span>Eats Ice Cream</span><span id="lbl-h-ice" class="text-gray-300 font-bold">80%</span></div>
-                            <input type="range" id="hmm-h-ice" min="0" max="100" value="80" class="w-full h-1 bg-gray-700 accent-purple-500 rounded" oninput="normalizeHMMRow('happy')">
-                            <div class="flex justify-between mt-1 text-[11px] text-gray-500"><span>Studies (Auto-calc)</span><span id="lbl-h-study">20%</span></div>
+                            <input type="range" id="hmm-h-ice" min="0" max="100" value="80" class="w-full h-1.5 bg-gray-700 accent-purple-500 rounded cursor-pointer" oninput="normalizeHMMRow('happy')">
+                            <div class="flex justify-between mt-1 text-gray-500"><span>Studies (Auto)</span><span id="lbl-h-study">20%</span></div>
                         </div>
                         <div class="border-t border-gray-700/50 my-2 pt-2"></div>
                         <div>
-                            <span class="text-amber-400 font-semibold block mb-1">When Hidden State = SAD:</span>
+                            <span class="text-amber-400 font-semibold block mb-1">When Hidden = SAD:</span>
                             <div class="flex justify-between mb-1"><span>Eats Ice Cream</span><span id="lbl-s-ice" class="text-gray-300 font-bold">30%</span></div>
-                            <input type="range" id="hmm-s-ice" min="0" max="100" value="30" class="w-full h-1 bg-gray-700 accent-amber-500 rounded" oninput="normalizeHMMRow('sad')">
-                            <div class="flex justify-between mt-1 text-[11px] text-gray-500"><span>Studies (Auto-calc)</span><span id="lbl-s-study">70%</span></div>
+                            <input type="range" id="hmm-s-ice" min="0" max="100" value="30" class="w-full h-1.5 bg-gray-700 accent-amber-500 rounded cursor-pointer" oninput="normalizeHMMRow('sad')">
+                            <div class="flex justify-between mt-1 text-gray-500"><span>Studies (Auto)</span><span id="lbl-s-study">70%</span></div>
                         </div>
                     </div>
-
-                    <button onclick="stepHMM()" class="w-full mt-4 bg-purple-600 hover:bg-purple-500 text-white font-semibold py-2 px-4 rounded text-xs transition-colors flex items-center justify-center gap-2 cursor-pointer">
-                        <i data-lucide="dice-5" class="w-4 h-4"></i> Sample Step Sequence
+                    <button onclick="stepHMM()" class="w-full mt-4 bg-purple-600 hover:bg-purple-500 text-white font-semibold py-2 rounded text-xs flex items-center justify-center gap-2 cursor-pointer transition-colors">
+                        <i data-lucide="dice-5" class="w-4 h-4"></i> Sample Sequence Step
                     </button>
                 </div>
 
                 <div class="lg:col-span-8 space-y-4">
-                    <div class="bg-gray-950 border border-gray-800 rounded-xl p-5 min-h-[220px]">
-                        <h3 class="text-sm font-bold text-white mb-2">Generative Sequential Chain Tracking</h3>
-                        <p class="text-xs text-gray-400 mb-4">Observe how the hidden layers emit physical, observable records below.</p>
-                        <canvas id="hmmCanvas" class="w-full bg-gray-900/40 rounded-lg border border-gray-800" height="150"></canvas>
+                    <div class="bg-gray-950 border border-gray-800 rounded-xl p-5 min-h-[200px] relative">
+                        <canvas id="hmmCanvas" class="absolute inset-0 w-full h-full bg-gray-900/40 rounded-lg border border-gray-800"></canvas>
                     </div>
-
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div class="bg-gray-900 border border-gray-800 p-4 rounded-xl text-xs">
-                            <span class="text-purple-400 uppercase font-bold tracking-wider text-[10px] block mb-1">Hidden Layers (Actual Moods)</span>
-                            <div id="hmm-hidden-path" class="font-mono text-purple-300 text-xs break-all uppercase tracking-widest">HAPPY</div>
+                            <span class="text-purple-400 font-bold text-[10px] block mb-1 uppercase tracking-wider">Hidden Layer Actual Sequence</span>
+                            <div id="hmm-hidden-path" class="font-mono text-purple-300 break-all uppercase tracking-wider">HAPPY</div>
                         </div>
                         <div class="bg-gray-900 border border-gray-800 p-4 rounded-xl text-xs">
-                            <span class="text-amber-400 uppercase font-bold tracking-wider text-[10px] block mb-1">Emitted Layers (Visible Actions)</span>
-                            <div id="hmm-emitted-path" class="font-mono text-amber-300 text-xs break-all uppercase tracking-widest">ICE_CREAM</div>
+                            <span class="text-amber-400 font-bold text-[10px] block mb-1 uppercase tracking-wider">Observed Generated Layer</span>
+                            <div id="hmm-emitted-path" class="font-mono text-amber-300 break-all uppercase tracking-wider">ICE_CREAM</div>
                         </div>
+                    </div>
+                    <div class="bg-gray-950 border border-gray-800 p-4 rounded-xl text-xs font-mono overflow-x-auto">
+                        <span class="text-purple-400 uppercase font-bold text-[10px] block mb-1">Current Evaluation Metrics Step Emission</span>
+                        <div id="hmm-equation-live" class="text-center text-sm text-white py-1"></div>
                     </div>
                 </div>
             </div>
         </div>
-
     </main>
 
     <script>
-        // Tab switching controller
         function switchTab(tabName) {
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-            document.getElementById(`content-${tabName}`).classList.remove('hidden');
-            
-            // Adjust styles
-            const btnMarkov = document.getElementById('tab-btn-markov');
-            const btnHMM = document.getElementById('tab-btn-hmm');
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden-tab'));
+            document.getElementById(`content-${tabName}`).classList.remove('hidden-tab');
+            const btnM = document.getElementById('tab-btn-markov'), btnH = document.getElementById('tab-btn-hmm');
             if (tabName === 'markov') {
-                btnMarkov.className = "py-3 px-6 font-medium text-sm border-b-2 border-indigo-500 text-indigo-400 transition-all cursor-pointer";
-                btnHMM.className = "py-3 px-6 font-medium text-sm border-b-2 border-transparent text-gray-400 hover:text-gray-200 transition-all cursor-pointer";
-                initMarkovCanvas();
+                btnM.className = "py-3 px-6 font-medium text-sm border-b-2 border-indigo-500 text-indigo-400 cursor-pointer";
+                btnH.className = "py-3 px-6 font-medium text-sm border-b-2 border-transparent text-gray-400 hover:text-gray-200 cursor-pointer";
+                setTimeout(initMarkovCanvas, 50); // Delay allows display:block to paint container width
             } else {
-                btnHMM.className = "py-3 px-6 font-medium text-sm border-b-2 border-purple-500 text-purple-400 transition-all cursor-pointer";
-                btnMarkov.className = "py-3 px-6 font-medium text-sm border-b-2 border-transparent text-gray-400 hover:text-gray-200 transition-all cursor-pointer";
-                initHMMCanvas();
+                btnH.className = "py-3 px-6 font-medium text-sm border-b-2 border-purple-500 text-purple-400 cursor-pointer";
+                btnM.className = "py-3 px-6 font-medium text-sm border-b-2 border-transparent text-gray-400 hover:text-gray-200 cursor-pointer";
+                setTimeout(initHMMCanvas, 50);
             }
         }
 
-        // ================= MARKOV CHAIN LOGIC ENGINE =================
-        const mSS = document.getElementById('m-ss');
-        const lblSS = document.getElementById('lbl-ss');
-        const lblSR = document.getElementById('lbl-sr');
-        const mRR = document.getElementById('m-rr');
-        const lblRR = document.getElementById('lbl-rr');
-        const lblRS = document.getElementById('lbl-rs');
-        const mHistory = document.getElementById('markov-history');
-        const markovCanvas = document.getElementById('markovCanvas');
-        const mCtx = markovCanvas.getContext('2d');
-
+        // MARKOV CODE ENGINE
+        const mSS = document.getElementById('m-ss'), lblSS = document.getElementById('lbl-ss'), lblSR = document.getElementById('lbl-sr');
+        const mRR = document.getElementById('m-rr'), lblRR = document.getElementById('lbl-rr'), lblRS = document.getElementById('lbl-rs');
+        const mHistory = document.getElementById('markov-history'), markovCanvas = document.getElementById('markovCanvas'), mCtx = markovCanvas.getContext('2d');
+        const mEqContainer = document.getElementById('markov-equation-live');
         let markovStateHistory = ['SUNNY'];
 
         function normalizeMarkovRow(type) {
-            if (type === 's') {
-                lblSS.innerText = mSS.value + "%";
-                lblSR.innerText = (100 - mSS.value) + "%";
-            } else {
-                lblRR.innerText = mRR.value + "%";
-                lblRS.innerText = (100 - mRR.value) + "%";
-            }
+            if (type === 's') { lblSS.innerText = mSS.value + "%"; lblSR.innerText = (100 - mSS.value) + "%"; }
+            else { lblRR.innerText = mRR.value + "%"; lblRS.innerText = (100 - mRR.value) + "%"; }
+            updateMarkovMathBox();
             initMarkovCanvas();
+        }
+
+        function updateMarkovMathBox() {
+            const s_to_s = (parseInt(mSS.value)/100).toFixed(2);
+            const s_to_r = (1 - s_to_s).toFixed(2);
+            const r_to_r = (parseInt(mRR.value)/100).toFixed(2);
+            const r_to_s = (1 - r_to_r).toFixed(2);
+            mEqContainer.innerHTML = `$$T = \\begin{bmatrix} ${s_to_s} & ${s_to_r} \\\\ ${r_to_s} & ${r_to_r} \\end{bmatrix}$$`;
+            if (window.MathJax && window.MathJax.typesetPromise) MathJax.typesetPromise([mEqContainer]);
         }
 
         function stepMarkov() {
             const current = markovStateHistory[markovStateHistory.length - 1];
-            const rand = Math.random() * 100;
-            let nextState = 'SUNNY';
-
-            if (current === 'SUNNY') {
-                if (rand > parseInt(mSS.value)) nextState = 'RAINY';
-            } else {
-                if (rand <= parseInt(mRR.value)) nextState = 'RAINY';
-            }
-
+            let nextState = Math.random() * 100 <= parseInt(current === 'SUNNY' ? mSS.value : 100 - mRR.value) ? 'SUNNY' : 'RAINY';
             markovStateHistory.push(nextState);
-            if(markovStateHistory.length > 35) markovStateHistory.shift();
-            
+            if(markovStateHistory.length > 25) markovStateHistory.shift();
             mHistory.innerText = markovStateHistory.join(' → ');
+            updateMarkovMathBox();
             initMarkovCanvas();
         }
 
         function initMarkovCanvas() {
-            const w = markovCanvas.width = markovCanvas.parentNode.getBoundingClientRect().width;
-            mCtx.clearRect(0,0,w,markovCanvas.height);
+            const rect = markovCanvas.parentNode.getBoundingClientRect();
+            if(rect.width === 0) return; // Prevent collapse if hidden
+            const w = markovCanvas.width = rect.width;
+            const h = markovCanvas.height = rect.height || 160;
             
-            // Render network node indicators on canvas background map
-            const nodeSunnyX = 120, nodeRainyX = w - 120, nodeY = 110;
+            mCtx.clearRect(0,0,w,h);
+            const nSX = w * 0.25, nRX = w * 0.75, nY = h / 2;
             
-            // Draw Sunny circle
-            mCtx.fillStyle = '#1e293b'; mCtx.strokeStyle = '#6366f1'; mCtx.lineWidth = 3;
-            mCtx.beginPath(); mCtx.arc(nodeSunnyX, nodeY, 35, 0, Math.PI*2); mCtx.fill(); mCtx.stroke();
-            mCtx.fillStyle = '#f3f4f6'; mCtx.font = 'bold 12px sans-serif'; mCtx.textAlign = 'center';
-            mCtx.fillText('SUNNY', nodeSunnyX, nodeY + 4);
-
-            // Draw Rainy circle
+            mCtx.fillStyle = '#1e293b'; mCtx.strokeStyle = '#6366f1'; mCtx.lineWidth = 2.5;
+            mCtx.beginPath(); mCtx.arc(nSX, nY, 25, 0, Math.PI*2); mCtx.fill(); mCtx.stroke();
+            
             mCtx.fillStyle = '#1e293b'; mCtx.strokeStyle = '#10b981';
-            mCtx.beginPath(); mCtx.arc(nodeRainyX, nodeY, 35, 0, Math.PI*2); mCtx.fill(); mCtx.stroke();
-            mCtx.fillStyle = '#f3f4f6'; mCtx.fillText('RAINY', nodeRainyX, nodeY + 4);
-
-            // Draw interconnecting state arrow paths
-            mCtx.strokeStyle = '#4b5563'; mCtx.lineWidth = 2;
-            mCtx.beginPath(); mCtx.moveTo(nodeSunnyX + 35, nodeY - 5); mCtx.lineTo(nodeRainyX - 35, nodeY - 5); mCtx.stroke();
-            mCtx.beginPath(); mCtx.moveTo(nodeRainyX - 35, nodeY + 5); mCtx.lineTo(nodeSunnyX + 35, nodeY + 5); mCtx.stroke();
-
-            // Flash active highlights depending on current state location position pointer indicators
+            mCtx.beginPath(); mCtx.arc(nRX, nY, 25, 0, Math.PI*2); mCtx.fill(); mCtx.stroke();
+            
+            mCtx.fillStyle = '#f3f4f6'; mCtx.font = 'bold 10px sans-serif'; mCtx.textAlign = 'center';
+            mCtx.fillText('SUNNY', nSX, nY+3); mCtx.fillText('RAINY', nRX, nY+3);
+            
             const active = markovStateHistory[markovStateHistory.length - 1];
-            mCtx.fillStyle = '#f59e0b';
-            mCtx.beginPath();
-            mCtx.arc(active === 'SUNNY' ? nodeSunnyX : nodeRainyX, nodeY - 48, 6, 0, Math.PI*2);
-            mCtx.fill();
+            mCtx.fillStyle = '#f59e0b'; mCtx.beginPath(); mCtx.arc(active === 'SUNNY' ? nSX : nRX, nY - 35, 5, 0, Math.PI*2); mCtx.fill();
         }
 
-        // ================= HMM LOGIC ENGINE =================
-        const hmmHIce = document.getElementById('hmm-h-ice');
-        const lblHIce = document.getElementById('lbl-h-ice');
-        const lblHStudy = document.getElementById('lbl-h-study');
-        const hmmSIce = document.getElementById('hmm-s-ice');
-        const lblSIce = document.getElementById('lbl-s-ice');
-        const lblSStudy = document.getElementById('lbl-s-study');
-        
-        const hPathDisplay = document.getElementById('hmm-hidden-path');
-        const ePathDisplay = document.getElementById('hmm-emitted-path');
-        const hmmCanvas = document.getElementById('hmmCanvas');
-        const hCtx = hmmCanvas.getContext('2d');
-
-        let hmmHiddenHistory = ['HAPPY'];
-        let hmmEmittedHistory = ['ICE_CREAM'];
+        // HMM CODE ENGINE
+        const hmmHIce = document.getElementById('hmm-h-ice'), lblHIce = document.getElementById('lbl-h-ice'), lblHStudy = document.getElementById('lbl-h-study');
+        const hmmSIce = document.getElementById('hmm-s-ice'), lblSIce = document.getElementById('lbl-s-ice'), lblSStudy = document.getElementById('lbl-s-study');
+        const hPathDisplay = document.getElementById('hmm-hidden-path'), ePathDisplay = document.getElementById('hmm-emitted-path'), hmmCanvas = document.getElementById('hmmCanvas'), hCtx = hmmCanvas.getContext('2d');
+        const hmmEqContainer = document.getElementById('hmm-equation-live');
+        let hmmHiddenHistory = ['HAPPY'], hmmEmittedHistory = ['ICE_CREAM'];
 
         function normalizeHMMRow(state) {
-            if(state === 'happy') {
-                lblHIce.innerText = hmmHIce.value + "%";
-                lblHStudy.innerText = (100 - hmmHIce.value) + "%";
-            } else {
-                lblSIce.innerText = hmmSIce.value + "%";
-                lblSStudy.innerText = (100 - hmmSIce.value) + "%";
-            }
+            if(state === 'happy') { lblHIce.innerText = hmmHIce.value + "%"; lblHStudy.innerText = (100 - hmmHIce.value) + "%"; }
+            else { lblSIce.innerText = hmmSIce.value + "%"; lblSStudy.innerText = (100 - hmmSIce.value) + "%"; }
+            updateHMMMathBox();
             initHMMCanvas();
         }
 
+        function updateHMMMathBox() {
+            const currentH = hmmHiddenHistory[hmmHiddenHistory.length - 1];
+            const currentE = hmmEmittedHistory[hmmEmittedHistory.length - 1];
+            let activeProb = currentH === 'HAPPY' ? (currentE === 'ICE_CREAM' ? hmmHIce.value/100 : 1 - hmmHIce.value/100) : (currentE === 'ICE_CREAM' ? hmmSIce.value/100 : 1 - hmmSIce.value/100);
+            hmmEqContainer.innerHTML = `$$P(\\text{Emission}\\!=\\!\\text{${currentE}} \\mid \\text{State}\\!=\\!\\text{${currentH}}) = ${activeProb.toFixed(2)}$$`;
+            if (window.MathJax && window.MathJax.typesetPromise) MathJax.typesetPromise([hmmEqContainer]);
+        }
+
         function stepHMM() {
-            // Fixed state transition rule for HMM hidden nodes inside sandbox demo:
-            // 80% stay same mood, 20% toggle mood
-            const currentHidden = hmmHiddenHistory[hmmHiddenHistory.length - 1];
-            let nextHidden = currentHidden;
-            if(Math.random() < 0.20) {
-                nextHidden = currentHidden === 'HAPPY' ? 'SAD' : 'HAPPY';
-            }
+            let nextHidden = hmmHiddenHistory[hmmHiddenHistory.length - 1];
+            if(Math.random() < 0.25) nextHidden = nextHidden === 'HAPPY' ? 'SAD' : 'HAPPY';
             hmmHiddenHistory.push(nextHidden);
-
-            // Calculate emission layer output tracking maps
-            const rand = Math.random() * 100;
-            let nextEmit = 'STUDYING';
-            if (nextHidden === 'HAPPY') {
-                if (rand <= parseInt(hmmHIce.value)) nextEmit = 'ICE_CREAM';
-            } else {
-                if (rand <= parseInt(hmmSIce.value)) nextEmit = 'ICE_CREAM';
-            }
+            let nextEmit = Math.random() * 100 <= (nextHidden === 'HAPPY' ? parseInt(hmmHIce.value) : parseInt(hmmSIce.value)) ? 'ICE_CREAM' : 'STUDYING';
             hmmEmittedHistory.push(nextEmit);
-
-            if(hmmHiddenHistory.length > 20) {
-                hmmHiddenHistory.shift();
-                hmmEmittedHistory.shift();
-            }
-
+            if(hmmHiddenHistory.length > 15) { hmmHiddenHistory.shift(); hmmEmittedHistory.shift(); }
             hPathDisplay.innerText = hmmHiddenHistory.join(' | ');
             ePathDisplay.innerText = hmmEmittedHistory.join(' | ');
+            updateHMMMathBox();
             initHMMCanvas();
         }
 
         function initHMMCanvas() {
-            const w = hmmCanvas.width = hmmCanvas.parentNode.getBoundingClientRect().width;
-            hCtx.clearRect(0,0,w,hmmCanvas.height);
+            const rect = hmmCanvas.parentNode.getBoundingClientRect();
+            if(rect.width === 0) return;
+            const w = hmmCanvas.width = rect.width;
+            const h = hmmCanvas.height = rect.height || 200;
             
-            const stepWidth = w / 21;
-            hCtx.lineWidth = 2.5;
-
-            // Draw continuous line paths for internal visual flow records
+            hCtx.clearRect(0,0,w,h);
+            const stepW = w / 16; hCtx.lineWidth = 2.5;
+            
             for(let i=0; i<hmmHiddenHistory.length - 1; i++) {
-                let x1 = i * stepWidth + 20;
-                let y1 = hmmHiddenHistory[i] === 'HAPPY' ? 35 : 75;
-                let x2 = (i+1) * stepWidth + 20;
-                let y2 = hmmHiddenHistory[i+1] === 'HAPPY' ? 35 : 75;
+                // Hidden Line
+                hCtx.strokeStyle = '#a855f7'; hCtx.beginPath();
+                hCtx.moveTo(i*stepW+15, hmmHiddenHistory[i]==='HAPPY'? h*0.25 : h*0.45); 
+                hCtx.lineTo((i+1)*stepW+15, hmmHiddenHistory[i+1]==='HAPPY'? h*0.25 : h*0.45); hCtx.stroke();
                 
-                hCtx.strokeStyle = '#a855f7';
-                hCtx.beginPath(); hCtx.moveTo(x1,y1); hCtx.lineTo(x2,y2); hCtx.stroke();
-
-                let ey1 = hmmEmittedHistory[i] === 'ICE_CREAM' ? 115 : 140;
-                let ey2 = hmmEmittedHistory[i+1] === 'ICE_CREAM' ? 115 : 140;
-                
-                hCtx.strokeStyle = '#f59e0b';
-                hCtx.beginPath(); hCtx.moveTo(x1,ey1); hCtx.lineTo(x2,ey2); hCtx.stroke();
+                // Emitted Line
+                hCtx.strokeStyle = '#f59e0b'; hCtx.beginPath();
+                hCtx.moveTo(i*stepW+15, hmmEmittedHistory[i]==='ICE_CREAM'? h*0.7 : h*0.85); 
+                hCtx.lineTo((i+1)*stepW+15, hmmEmittedHistory[i+1]==='ICE_CREAM'? h*0.7 : h*0.85); hCtx.stroke();
             }
-
-            // Draw point blocks labels
-            hCtx.fillStyle = '#a855f7'; hCtx.font = '9px monospace';
-            hCtx.fillText("HIDDEN LAYER (MOOD)", 10, 15);
-            hCtx.fillStyle = '#f59e0b';
-            hCtx.fillText("OBSERVED LAYER (ACTION)", 10, 103);
         }
 
-        // Initialize UI maps
-        window.addEventListener('resize', () => { initMarkovCanvas(); initHMMCanvas(); });
-        normalizeMarkovRow('s');
-        normalizeMarkovRow('r');
-        normalizeHMMRow('happy');
-        normalizeHMMRow('sad');
-        setTimeout(() => lucide.createIcons(), 200);
+        window.addEventListener('resize', () => { 
+            if(document.getElementById('content-markov').classList.contains('hidden-tab') === false) initMarkovCanvas(); 
+            if(document.getElementById('content-hmm').classList.contains('hidden-tab') === false) initHMMCanvas(); 
+        });
+        
+        normalizeMarkovRow('s'); normalizeMarkovRow('r');
+        normalizeHMMRow('happy'); normalizeHMMRow('sad');
+        setTimeout(() => { lucide.createIcons(); initMarkovCanvas(); }, 200);
     </script>
 </body>
 </html>

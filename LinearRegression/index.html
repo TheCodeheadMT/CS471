@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Linear Regression Simulator</title>
+    <title>Linear Re-Grashin' Simulator</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script>
@@ -40,7 +40,7 @@
                 </p>
             </div>
             <div class="bg-gray-900 p-4 rounded-lg border border-gray-800 flex flex-col justify-center text-xs font-mono text-sky-300 text-center">
-                <div class="mb-1 text-white">Line Equation:</div>
+                <div class="mb-1 text-white">General Equation Form:</div>
                 <div>$\hat{y} = \beta_1 x + \beta_0$</div>
             </div>
         </section>
@@ -49,7 +49,7 @@
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
             
             <!-- Left Side: Cluster Controls -->
-            <div class="lg:col-span-5 bg-gray-800/60 border border-gray-800 rounded-xl p-5 flex flex-col h-[600px]">
+            <div class="lg:col-span-5 bg-gray-800/60 border border-gray-800 rounded-xl p-5 flex flex-col h-[650px]">
                 <div class="flex justify-between items-center border-b border-gray-700 pb-3 mb-4">
                     <h3 class="text-sm font-bold text-white uppercase tracking-wider">Data Clusters (Up to 6)</h3>
                     <button onclick="scrambleAll()" class="text-xs bg-gray-700 hover:bg-gray-600 text-white px-3 py-1 rounded transition-colors flex items-center gap-1 cursor-pointer">
@@ -66,29 +66,41 @@
             </div>
 
             <!-- Right Side: Visual Graph & Math Outputs -->
-            <div class="lg:col-span-7 flex flex-col gap-6">
+            <div class="lg:col-span-7 flex flex-col gap-4">
                 
                 <!-- Graph Canvas -->
                 <div class="bg-gray-950 border border-gray-800 rounded-xl p-5">
-                    <h3 class="text-sm font-bold text-white mb-4">Scatter Plot & Regression Line</h3>
+                    <h3 class="text-sm font-bold text-white mb-4">Scatter Plot Visualization</h3>
                     <div class="relative w-full aspect-video bg-gray-900/50 rounded-lg border border-gray-800 overflow-hidden">
                         <canvas id="regressionCanvas" class="absolute inset-0 w-full h-full"></canvas>
                     </div>
                 </div>
 
-                <!-- Live Mathematical Output -->
+                <!-- NEW: Live Equation Readout -->
+                <div class="bg-gray-900 border border-sky-900/50 rounded-xl p-6 text-center shadow-[0_0_20px_rgba(14,165,233,0.1)]">
+                    <span class="text-xs uppercase font-bold text-sky-400 tracking-widest block mb-2">Live Regression Equation</span>
+                    <div class="text-3xl sm:text-4xl font-mono text-white tracking-tight flex items-center justify-center gap-2">
+                        <span>ŷ =</span>
+                        <span id="live-slope" class="text-indigo-400 font-bold">0.00</span>
+                        <span>x</span>
+                        <span id="live-sign" class="text-gray-500">+</span>
+                        <span id="live-intercept" class="text-emerald-400 font-bold">0.00</span>
+                    </div>
+                </div>
+
+                <!-- Parameter Readouts -->
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div class="bg-gray-800/40 border border-gray-800 rounded-xl p-4 text-center">
-                        <span class="text-[10px] uppercase font-bold text-gray-400 tracking-wider block mb-1">Slope ($m$ / $\beta_1$)</span>
-                        <span id="out-slope" class="text-2xl font-mono text-white">0.00</span>
+                        <span class="text-[10px] uppercase font-bold text-gray-400 tracking-wider block mb-1">Slope ($\beta_1$)</span>
+                        <span id="out-slope" class="text-2xl font-mono text-indigo-400">0.00</span>
                     </div>
                     <div class="bg-gray-800/40 border border-gray-800 rounded-xl p-4 text-center">
-                        <span class="text-[10px] uppercase font-bold text-gray-400 tracking-wider block mb-1">Y-Intercept ($b$ / $\beta_0$)</span>
-                        <span id="out-intercept" class="text-2xl font-mono text-white">0.00</span>
+                        <span class="text-[10px] uppercase font-bold text-gray-400 tracking-wider block mb-1">Y-Intercept ($\beta_0$)</span>
+                        <span id="out-intercept" class="text-2xl font-mono text-emerald-400">0.00</span>
                     </div>
-                    <div class="bg-gray-900 border border-sky-900/50 rounded-xl p-4 text-center shadow-[0_0_15px_rgba(14,165,233,0.1)]">
-                        <span class="text-[10px] uppercase font-bold text-sky-400 tracking-wider block mb-1">Correlation ($R^2$)</span>
-                        <span id="out-r2" class="text-2xl font-mono text-sky-400 font-bold">0.00</span>
+                    <div class="bg-gray-800/40 border border-gray-800 rounded-xl p-4 text-center">
+                        <span class="text-[10px] uppercase font-bold text-gray-400 tracking-wider block mb-1">Correlation ($R^2$)</span>
+                        <span id="out-r2" class="text-2xl font-mono text-white font-bold">0.00</span>
                     </div>
                 </div>
 
@@ -101,9 +113,16 @@
         const controlsContainer = document.getElementById('cluster-controls');
         const canvas = document.getElementById('regressionCanvas');
         const ctx = canvas.getContext('2d');
+        
+        // Output Elements
         const outSlope = document.getElementById('out-slope');
         const outIntercept = document.getElementById('out-intercept');
         const outR2 = document.getElementById('out-r2');
+        
+        // Live Equation Elements
+        const liveSlope = document.getElementById('live-slope');
+        const liveSign = document.getElementById('live-sign');
+        const liveIntercept = document.getElementById('live-intercept');
 
         // Color palette for the 6 clusters
         const palette = [
@@ -124,10 +143,10 @@
             clusters.push({
                 id: i,
                 enabled: i < 2, // Start with first 2 enabled
-                cx: Math.floor(Math.random() * 80) + 10, // Center X (0-100)
-                cy: Math.floor(Math.random() * 80) + 10, // Center Y (0-100)
+                cx: Math.floor(Math.random() * 80) + 10,
+                cy: Math.floor(Math.random() * 80) + 10,
                 spread: 15,
-                points: [] // Will hold {x, y} relative to 0-100
+                points: []
             });
         }
 
@@ -176,7 +195,6 @@
         function generateClusterPoints(cluster) {
             cluster.points = [];
             for(let j = 0; j < POINTS_PER_CLUSTER; j++) {
-                // Generate normally distributed-ish points around center
                 let rx = cluster.cx + (Math.random() + Math.random() - 1) * cluster.spread;
                 let ry = cluster.cy + (Math.random() + Math.random() - 1) * cluster.spread;
                 cluster.points.push({ x: rx, y: ry });
@@ -187,10 +205,9 @@
             clusters.forEach(c => generateClusterPoints(c));
         }
 
-        // Handlers from UI
         function toggleCluster(id, state) {
             clusters[id].enabled = state;
-            buildControls(); // re-render to gray out
+            buildControls(); 
             calculateAndDraw();
         }
 
@@ -214,31 +231,27 @@
                     generateClusterPoints(c);
                 }
             });
-            buildControls(); // update slider positions in UI
+            buildControls(); 
             calculateAndDraw();
         }
 
         // 3. Math & Rendering
         function calculateAndDraw() {
-            // Resize canvas to match display size
             const rect = canvas.parentElement.getBoundingClientRect();
             canvas.width = rect.width;
             canvas.height = rect.height;
 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // Collect all active points
             let allPoints = [];
             clusters.forEach((c, i) => {
                 if(c.enabled) {
-                    // Map 0-100 logic space to Canvas pixel space
-                    // X goes right, Y goes UP (so we invert Y for canvas)
                     c.points.forEach(p => {
                         allPoints.push({
                             px: (p.x / 100) * canvas.width,
                             py: canvas.height - ((p.y / 100) * canvas.height),
-                            lx: p.x, // logical X
-                            ly: p.y, // logical Y
+                            lx: p.x,
+                            ly: p.y,
                             color: palette[i].hex
                         });
                     });
@@ -267,6 +280,7 @@
             let n = allPoints.length;
             if(n < 2) {
                 outSlope.innerText = "-"; outIntercept.innerText = "-"; outR2.innerText = "-";
+                liveSlope.innerText = "0.00"; liveIntercept.innerText = "0.00"; liveSign.innerText = "+";
                 return;
             }
 
@@ -291,29 +305,37 @@
             });
             let r2 = ssTot === 0 ? 0 : 1 - (ssRes / ssTot);
 
-            // Update Math UI
+            // ----------------------------------------------------
+            // UPDATE THE UI MATH DISPLAYS DYNAMICALLY
+            // ----------------------------------------------------
+            
+            // Parameter Boxes
             outSlope.innerText = slope.toFixed(2);
             outIntercept.innerText = intercept.toFixed(2);
             outR2.innerText = Math.max(0, r2).toFixed(3);
 
+            // Live Equation Readout
+            liveSlope.innerText = slope.toFixed(2);
+            liveIntercept.innerText = Math.abs(intercept).toFixed(2);
+            liveSign.innerText = intercept < 0 ? "-" : "+";
+
             // Draw Regression Line
-            // Calculate points at logic x=0 and x=100
-            let y0 = intercept; // x=0
-            let y100 = slope * 100 + intercept; // x=100
+            let y0 = intercept; 
+            let y100 = slope * 100 + intercept; 
 
             let px0 = 0;
             let py0 = canvas.height - ((y0 / 100) * canvas.height);
             let px100 = canvas.width;
             let py100 = canvas.height - ((y100 / 100) * canvas.height);
 
-            ctx.strokeStyle = '#f8fafc'; // White line
+            ctx.strokeStyle = '#f8fafc';
             ctx.lineWidth = 3;
             ctx.setLineDash([8, 8]);
             ctx.beginPath();
             ctx.moveTo(px0, py0);
             ctx.lineTo(px100, py100);
             ctx.stroke();
-            ctx.setLineDash([]); // Reset
+            ctx.setLineDash([]);
         }
 
         // Init App

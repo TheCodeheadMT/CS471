@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Classical ML Classifiers Simulator</title>
+    <title>ML Classifiers & Random Forest Simulator</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script>
@@ -26,8 +26,8 @@
     <main class="max-w-7xl mx-auto px-4 py-8">
         
         <header class="mb-8">
-            <h1 class="text-3xl font-extrabold text-white mb-2">Decision Boundary Simulator</h1>
-            <p class="text-gray-400">Interact with data clusters to visualize how different classical algorithms calculate decision surfaces.</p>
+            <h1 class="text-3xl font-extrabold text-white mb-2">Decision Boundary & Ensemble Simulator</h1>
+            <p class="text-gray-400">Visualize how classical algorithms and ensemble methods calculate classification logic.</p>
         </header>
 
         <div class="flex border-b border-gray-800 mb-8 space-x-4 overflow-x-auto">
@@ -39,6 +39,9 @@
             </button>
             <button id="tab-btn-svm" onclick="switchTab('svm')" class="py-3 px-6 font-medium text-sm border-b-2 border-transparent text-gray-400 hover:text-gray-200 cursor-pointer whitespace-nowrap">
                 Support Vector Machine (SVM)
+            </button>
+            <button id="tab-btn-rf" onclick="switchTab('rf')" class="py-3 px-6 font-medium text-sm border-b-2 border-transparent text-gray-400 hover:text-gray-200 cursor-pointer whitespace-nowrap">
+                Random Forest (Ensemble)
             </button>
         </div>
 
@@ -142,7 +145,7 @@
                         </div>
                         <div class="border-t border-gray-700/50 my-2 pt-2"></div>
                         <div>
-                            <div class="flex justify-between mb-1"><span class="text-gray-300 font-bold">Margin Width (Slack Penalty)</span><span id="svm-margin-val">Medium</span></div>
+                            <div class="flex justify-between mb-1"><span class="text-gray-300 font-bold">Margin Width (Slack Penalty)</span><span id="svm-margin-val">40px</span></div>
                             <input type="range" id="svm-margin" min="10" max="80" value="40" class="w-full h-1.5 bg-gray-700 accent-gray-400 rounded cursor-pointer">
                         </div>
                     </div>
@@ -158,14 +161,59 @@
                 </div>
             </div>
         </div>
+
+        <div id="content-rf" class="tab-content hidden-tab space-y-8">
+            <section class="bg-gray-800/40 border border-gray-800 rounded-xl p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="md:col-span-2">
+                    <h2 class="text-lg font-semibold text-orange-400 mb-2 flex items-center gap-2">
+                        <i data-lucide="tree-pine" class="w-5 h-5"></i> How Random Forest Works
+                    </h2>
+                    <p class="text-gray-300 text-sm leading-relaxed">
+                        Random Forest is an <strong>Ensemble</strong> of many Decision Trees. It uses <strong>Bagging</strong> (Bootstrap Aggregating) to train each tree on a random subset of data. The final classification is determined by a <strong>Majority Vote</strong>, reducing the risk of overfitting.
+                    </p>
+                </div>
+                <div class="bg-gray-900 p-4 rounded-lg border border-gray-800 flex flex-col justify-center text-xs font-mono text-orange-300 overflow-x-auto">
+                    <div class="text-white font-bold mb-1">Ensemble Prediction:</div>
+                    <div>$H(x) = \text{mode}\{h_1(x), h_2(x), \dots, h_B(x)\}$</div>
+                </div>
+            </section>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                <div class="lg:col-span-4 bg-gray-800/60 border border-gray-800 rounded-xl p-5 space-y-4">
+                    <h3 class="text-sm font-bold text-white uppercase tracking-wider border-b border-gray-700 pb-2">Forest Hyperparameters</h3>
+                    <div class="space-y-4 text-xs">
+                        <div>
+                            <div class="flex justify-between mb-1"><span class="text-orange-400 font-bold">Number of Trees ($B$)</span><span id="rf-trees-val">5</span></div>
+                            <input type="range" id="rf-trees" min="1" max="12" value="5" class="w-full h-1.5 bg-gray-700 accent-orange-500 rounded cursor-pointer">
+                        </div>
+                        <div class="border-t border-gray-700/50 my-2 pt-2"></div>
+                        <div>
+                            <div class="flex justify-between mb-1"><span class="text-gray-300 font-bold">Tree Depth (Complexity)</span><span id="rf-depth-val">3</span></div>
+                            <input type="range" id="rf-depth" min="1" max="5" value="3" class="w-full h-1.5 bg-gray-700 accent-gray-400 rounded cursor-pointer">
+                        </div>
+                    </div>
+                </div>
+                <div class="lg:col-span-8 bg-gray-950 border border-gray-800 rounded-xl p-6 min-h-[400px] flex flex-col justify-between">
+                    <div>
+                        <h3 class="text-sm font-bold text-white mb-4">Voting Schema Visualization</h3>
+                        <div id="forest-container" class="flex flex-wrap gap-4 justify-center py-4">
+                            </div>
+                    </div>
+                    <div class="bg-gray-900 p-4 rounded-lg border border-gray-800 mt-4 text-xs font-mono overflow-x-auto">
+                        <span class="text-orange-400 uppercase font-bold text-[10px] block mb-1">Live Aggregate Majority Vote</span>
+                        <div id="rf-equation-live" class="text-center text-white text-sm py-1"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </main>
 
     <script>
-        // Data Generation Utils
+        // ======================= UTILS & DATA GENERATION =======================
         function generateCluster(count, baseX, baseY, spread) {
             let pts = [];
             for(let i=0; i<count; i++) {
-                // simple box-muller transform for gaussian distribution
                 let u = 0, v = 0;
                 while(u === 0) u = Math.random();
                 while(v === 0) v = Math.random();
@@ -176,7 +224,6 @@
             return pts;
         }
 
-        // Static offsets so points look identical as they move
         const clusterAPts = generateCluster(50, 0, 0, 1);
         const clusterBPts = generateCluster(50, 0, 0, 1);
 
@@ -190,7 +237,7 @@
         }
 
         function drawBackgroundGrid(ctx, w, h, evalFunc) {
-            const step = 8; // Pixel grid resolution
+            const step = 8; 
             for(let x=0; x<w; x+=step) {
                 for(let y=0; y<h; y+=step) {
                     let classRes = evalFunc(x, y);
@@ -200,28 +247,27 @@
             }
         }
 
-        // Tab Controller
+        // ======================= TAB CONTROLLER =======================
         function switchTab(tabName) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden-tab'));
             document.getElementById(`content-${tabName}`).classList.remove('hidden-tab');
             
-            const activeClass = "py-3 px-6 font-medium text-sm border-b-2 cursor-pointer whitespace-nowrap ";
-            const inactiveClass = "py-3 px-6 font-medium text-sm border-b-2 border-transparent text-gray-400 hover:text-gray-200 cursor-pointer whitespace-nowrap";
+            const btns = ['lda', 'qda', 'svm', 'rf'];
+            const colors = { lda: 'indigo', qda: 'purple', svm: 'emerald', rf: 'orange' };
             
-            document.getElementById('tab-btn-lda').className = inactiveClass;
-            document.getElementById('tab-btn-qda').className = inactiveClass;
-            document.getElementById('tab-btn-svm').className = inactiveClass;
+            btns.forEach(b => {
+                const btn = document.getElementById(`tab-btn-${b}`);
+                btn.className = "py-3 px-6 font-medium text-sm border-b-2 border-transparent text-gray-400 hover:text-gray-200 cursor-pointer whitespace-nowrap";
+            });
 
-            if(tabName === 'lda') {
-                document.getElementById('tab-btn-lda').className = activeClass + "border-indigo-500 text-indigo-400";
-                setTimeout(renderLDA, 50);
-            } else if(tabName === 'qda') {
-                document.getElementById('tab-btn-qda').className = activeClass + "border-purple-500 text-purple-400";
-                setTimeout(renderQDA, 50);
-            } else if(tabName === 'svm') {
-                document.getElementById('tab-btn-svm').className = activeClass + "border-emerald-500 text-emerald-400";
-                setTimeout(renderSVM, 50);
-            }
+            const activeBtn = document.getElementById(`tab-btn-${tabName}`);
+            activeBtn.className = `py-3 px-6 font-medium text-sm border-b-2 border-${colors[tabName]}-500 text-${colors[tabName]}-400 cursor-pointer whitespace-nowrap`;
+
+            // Timeout allows the DOM to render the container block so the canvas can grab its parent's width
+            if(tabName === 'lda') setTimeout(renderLDA, 50);
+            if(tabName === 'qda') setTimeout(renderQDA, 50);
+            if(tabName === 'svm') setTimeout(renderSVM, 50);
+            if(tabName === 'rf') setTimeout(renderRF, 50);
         }
 
         // ======================= LDA LOGIC =======================
@@ -239,28 +285,22 @@
             const m1x = w * (parseInt(ldaMu1.value)/100);
             const m2x = w * (parseInt(ldaMu2.value)/100);
             const midY = h/2;
-            const variance = 25; // Shared variance
+            const variance = 25; 
 
             document.getElementById('lda-mu1-val').innerText = ldaMu1.value + "%";
             document.getElementById('lda-mu2-val').innerText = ldaMu2.value + "%";
 
-            // Draw decision background (linear mid-point)
             drawBackgroundGrid(ctx, w, h, (x, y) => {
-                const dist1 = Math.pow(x - m1x, 2);
-                const dist2 = Math.pow(x - m2x, 2);
-                return dist1 < dist2 ? 0 : 1;
+                return Math.pow(x - m1x, 2) < Math.pow(x - m2x, 2) ? 0 : 1;
             });
 
-            // Draw Clusters
             drawCluster(ctx, clusterAPts, m1x, midY, variance, '#3b82f6');
             drawCluster(ctx, clusterBPts, m2x, midY, variance, '#f43f5e');
 
-            // Draw Boundary Line
             const midX = (m1x + m2x) / 2;
             ctx.strokeStyle = '#f8fafc'; ctx.lineWidth = 2;
             ctx.beginPath(); ctx.moveTo(midX, 0); ctx.lineTo(midX, h); ctx.stroke();
 
-            // Equation Update
             const w_vec = (m2x - m1x).toFixed(1);
             ldaEq.innerHTML = `$$y(x) = (${w_vec})x + b \\quad \\Rightarrow \\quad \\text{Classify A if } y < 0$$`;
             if (window.MathJax && window.MathJax.typesetPromise) MathJax.typesetPromise([ldaEq]);
@@ -279,14 +319,13 @@
             const w = canvas.width = rect.width, h = canvas.height = rect.height || 250;
             const ctx = canvas.getContext('2d');
 
-            const m1x = w * 0.35, m2x = w * 0.65; // Fixed means for QDA
+            const m1x = w * 0.35, m2x = w * 0.65; 
             const v1 = parseInt(qdaVar1.value);
             const v2 = parseInt(qdaVar2.value);
 
             document.getElementById('qda-var1-val').innerText = (v1/50).toFixed(1) + "x";
             document.getElementById('qda-var2-val').innerText = (v2/50).toFixed(1) + "x";
 
-            // Draw decision background evaluating full QDA discriminant
             drawBackgroundGrid(ctx, w, h, (x, y) => {
                 const d1 = Math.pow(x - m1x, 2) + Math.pow(y - (h/2), 2);
                 const d2 = Math.pow(x - m2x, 2) + Math.pow(y - (h/2), 2);
@@ -295,11 +334,9 @@
                 return s1 > s2 ? 0 : 1;
             });
 
-            // Draw Clusters
             drawCluster(ctx, clusterAPts, m1x, h/2, v1 * 0.5, '#3b82f6');
             drawCluster(ctx, clusterBPts, m2x, h/2, v2 * 0.5, '#f43f5e');
 
-            // Equation Update
             const delta1 = (-Math.log(v1) - (Math.pow(w/2 - m1x, 2) / (2 * v1 * v1))).toFixed(3);
             const delta2 = (-Math.log(v2) - (Math.pow(w/2 - m2x, 2) / (2 * v2 * v2))).toFixed(3);
             qdaEq.innerHTML = `$$\\delta_{A}(x_{center}) = ${delta1} \\quad \\text{vs} \\quad \\delta_{B}(x_{center}) = ${delta2}$$`;
@@ -326,18 +363,13 @@
             document.getElementById('svm-angle-val').innerText = svmAngle.value + "°";
             document.getElementById('svm-margin-val').innerText = margin + "px";
 
-            // Background Grid (Linear split based on angle)
             drawBackgroundGrid(ctx, w, h, (x, y) => {
-                // Rotate point back to test against vertical split
                 const rotatedX = Math.cos(-angle) * (x - midX) - Math.sin(-angle) * (y - midY);
                 return rotatedX < 0 ? 0 : 1;
             });
 
-            // Draw Points
             const variance = 25;
             const m1x = w*0.25, m2x = w*0.75;
-            
-            // To visualize support vectors, we check distance to rotated line
             let ptsA = clusterAPts.map(p => ({ x: m1x + p.dx*variance, y: midY + p.dy*variance }));
             let ptsB = clusterBPts.map(p => ({ x: m2x + p.dx*variance, y: midY + p.dy*variance }));
 
@@ -358,37 +390,80 @@
                 if(checkSupport(p.x, p.y)) { ctx.strokeStyle = '#deff9a'; ctx.stroke(); }
             });
 
-            // Draw Lines
             ctx.save();
             ctx.translate(midX, midY);
             ctx.rotate(angle);
-            
-            // Main Boundary
             ctx.strokeStyle = '#f8fafc'; ctx.lineWidth = 2;
             ctx.beginPath(); ctx.moveTo(0, -h); ctx.lineTo(0, h); ctx.stroke();
-            
-            // Margins
             ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 1; ctx.setLineDash([5, 5]);
             ctx.beginPath(); ctx.moveTo(-margin, -h); ctx.lineTo(-margin, h); ctx.stroke();
             ctx.beginPath(); ctx.moveTo(margin, -h); ctx.lineTo(margin, h); ctx.stroke();
-            
             ctx.restore();
 
-            // Equation Update
             const marginWidth = (2 / margin).toFixed(3);
             svmEq.innerHTML = `$$\\min \\frac{1}{2} ||w||^2 \\quad \\Rightarrow \\quad \\text{Margin Width} = \\frac{2}{||w||} \\approx ${marginWidth}$$`;
             if (window.MathJax && window.MathJax.typesetPromise) MathJax.typesetPromise([svmEq]);
         }
         [svmAngle, svmMargin].forEach(el => el.addEventListener('input', renderSVM));
 
-        // Initial setup hooks
+        // ======================= RANDOM FOREST LOGIC =======================
+        const rfTrees = document.getElementById('rf-trees');
+        const rfDepth = document.getElementById('rf-depth');
+        const rfEq = document.getElementById('rf-equation-live');
+        const forestContainer = document.getElementById('forest-container');
+
+        function renderRF() {
+            const numTrees = parseInt(rfTrees.value);
+            const depth = parseInt(rfDepth.value);
+            
+            document.getElementById('rf-trees-val').innerText = numTrees;
+            document.getElementById('rf-depth-val').innerText = depth;
+
+            forestContainer.innerHTML = '';
+            let votes = [];
+
+            for(let i=0; i<numTrees; i++) {
+                const vote = Math.random() > 0.5 ? 'Blue' : 'Red';
+                votes.push(vote);
+
+                const treeDiv = document.createElement('div');
+                treeDiv.className = `p-3 rounded-lg border flex flex-col items-center gap-2 transition-all duration-300 ${vote === 'Blue' ? 'border-blue-500/30 bg-blue-500/5' : 'border-rose-500/30 bg-rose-500/5'}`;
+                
+                treeDiv.innerHTML = `
+                    <div class="text-[10px] text-gray-500 uppercase font-bold">Tree #${i+1}</div>
+                    <div class="flex flex-col items-center gap-1">
+                        <div class="w-2 h-2 rounded-full bg-gray-600"></div>
+                        <div class="flex gap-4">
+                             <div class="w-1.5 h-1.5 rounded-full ${depth > 1 ? 'bg-gray-600' : 'opacity-0'}"></div>
+                             <div class="w-1.5 h-1.5 rounded-full ${depth > 1 ? 'bg-gray-600' : 'opacity-0'}"></div>
+                        </div>
+                    </div>
+                    <div class="text-[10px] font-bold ${vote === 'Blue' ? 'text-blue-400' : 'text-rose-400'}">PREDICT: ${vote}</div>
+                `;
+                forestContainer.appendChild(treeDiv);
+            }
+
+            const blueVotes = votes.filter(v => v === 'Blue').length;
+            const redVotes = votes.filter(v => v === 'Red').length;
+            const finalClass = blueVotes >= redVotes ? '\\text{Blue}' : '\\text{Red}';
+
+            const voteStr = votes.map(v => v === 'Blue' ? 'A' : 'B').join(', ');
+            rfEq.innerHTML = `$$H(x) = \\text{mode}\\{${voteStr}\\} = ${finalClass}$$`;
+            if (window.MathJax && window.MathJax.typesetPromise) MathJax.typesetPromise([rfEq]);
+        }
+        [rfTrees, rfDepth].forEach(el => el.addEventListener('input', renderRF));
+
+        // ======================= INIT =======================
         window.addEventListener('resize', () => { 
             if(!document.getElementById('content-lda').classList.contains('hidden-tab')) renderLDA();
             if(!document.getElementById('content-qda').classList.contains('hidden-tab')) renderQDA();
             if(!document.getElementById('content-svm').classList.contains('hidden-tab')) renderSVM();
         });
 
-        setTimeout(() => { lucide.createIcons(); switchTab('lda'); }, 200);
+        setTimeout(() => { 
+            lucide.createIcons(); 
+            switchTab('lda'); 
+        }, 200);
     </script>
 </body>
 </html>

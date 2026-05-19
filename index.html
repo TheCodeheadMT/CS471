@@ -3,17 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My App Dashboard</title>
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <title>AI Simulation Lab Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /* Ensures the canvas stays fixed behind all content */
+        #network-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: -1;
+            background-color: #030712; /* Tailwind gray-950 */
+        }
+    </style>
 </head>
-<body class="bg-gray-900 text-gray-100 font-sans min-h-screen flex flex-col">
+<body class="text-gray-100 font-sans min-h-screen flex flex-col bg-transparent">
 
-    <header class="border-b border-gray-800 bg-gray-900/80 backdrop-blur sticky top-0 z-50">
+    <canvas id="network-bg"></canvas>
+
+    <header class="border-b border-gray-800/60 bg-gray-900/60 backdrop-blur-md sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
             <div class="flex items-center gap-2">
-                <i data-lucide="layout-dashboard" class="w-6 h-6 text-indigo-400"></i>
-                <span class="font-bold text-xl tracking-tight">Artificial Intelligence Simulation Lab</span>
+                <i data-lucide="layout-dashboard" class="w-5 h-5 text-indigo-400"></i>
+                <span class="font-bold text-lg tracking-tight">Artificial Intelligence Simulation Lab</span>
             </div>
             <nav class="flex gap-4">
                 <a href="https://github.com/YOUR_USERNAME" target="_blank" class="text-gray-400 hover:text-white transition-colors">
@@ -23,129 +37,107 @@
         </div>
     </header>
 
-    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div class="text-center mb-16">
-            <h1 class="text-4xl sm:text-5xl font-extrabold text-white mb-4 tracking-tight">
-            Introduction to Artificial Intelligence
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <div class="text-center mb-12">
+            <h1 class="text-3xl sm:text-4xl font-extrabold text-white mb-3 tracking-tight">
+                Introduction to Artificial Intelligence
             </h1>
-            <p class="text-lg text-gray-400 max-w-2xl mx-auto">
+            <p class="text-base text-gray-400 max-w-2xl mx-auto">
                 Web applications, utilities, and experiments for CS 471.
             </p>
         </div>
 
-        <div id="apps-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div id="apps-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
             </div>
     </main>
 
-    <footer class="border-t border-gray-800 bg-gray-950 py-6 mt-12">
-        <div class="max-w-7xl mx-auto px-4 text-center text-sm text-gray-500">
+    <footer class="border-t border-gray-800/60 bg-gray-950/80 backdrop-blur-sm py-6 mt-12">
+        <div class="max-w-7xl mx-auto px-4 text-center text-xs text-gray-500">
             &copy; 2026 Michael Todd. Built with HTML, Tailwind, and GitHub Pages.
         </div>
     </footer>
 
     <script>
-        // 1. App Data Configuration
-        // Add, remove, or modify your apps here!
         const apps = [
             {
                 title: "Bayes Sim",
-                description: "An interactive visualizer that demonstrates Bayes' Theorem using a dynamic 1,000-dot population matrix to show how new evidence updates probability.",
-                tags: ["Probability", "Bayes' Rule" ],
-                liveUrl: "./BayesSim/index.html", // Path if hosted in a subdirectory
-                repoUrl: "https://TheCodeheadMT.github.com/CS471/BayesSim/BayesSim/index.html",
+                description: "An interactive visualizer that demonstrates Bayes' Theorem using a dynamic 1,000-dot population matrix.",
+                tags: ["Probability", "Bayes' Rule"],
+                liveUrl: "./BayesSim/index.html",
+                repoUrl: "https://TheCodeheadMT.github.com/CS471/BayesSim",
                 icon: "sliders"
             },
             {
-                title: "Bayesian Nets Sim",
-                description: "A graphical model simulator using HTML5 Canvas to show how evidence propagates forward for classification and backward for causal inference.",
-                tags: ["Machine Learning", "Graphs", "Inference"],
-                liveUrl: "./BayesianNetworkSim/index.html", // Path if hosted in a subdirectory
-                repoUrl: "https://TheCodeheadMT.github.com/CS471/BayesianNetworkSim/BayesianNetworkSim/index.html",
+                title: "Bayesian Nets",
+                description: "HTML5 Canvas simulator showing forward classification and backward causal inference.",
+                tags: ["Machine Learning", "Graphs"],
+                liveUrl: "./BayesianNetworkSim/index.html",
+                repoUrl: "https://TheCodeheadMT.github.com/CS471/BayesianNetworkSim",
                 icon: "network"
-            },{
-                title: "Markov & Hidden Markov Models",
-                description: "A simulator tracking Markov Chains and Hidden Markov Models (HMMs) with automated row normalization and real-time generation paths.",
+            },
+            {
+                title: "Markov & HMM",
+                description: "Simulator tracking Markov Chains and Hidden Markov Models with automated row normalization.",
                 tags: ["Markov Chains", "HMM", "Time-Series"],
                 liveUrl: "./HiddenMarkovSim/index.html",
-                repoUrl: "https://github.com/TheCodeheadMT/CS471/HiddenMarkovSim/HiddenMarkovSim/index.html",
+                repoUrl: "https://github.com/TheCodeheadMT/CS471/HiddenMarkovSim",
                 icon: "git-commit"
             },
             {
-                title: "Linear Regression Sim",
-                description: "An interactive scatter plot tool visualizing least-squares regression. Generate and manipulate up to six distinct data clusters to see how variance and outliers skew predictions.",
-                tags: ["Statistics", "Regression", "Machine Learning"],
+                title: "Linear Regression",
+                description: "Scatter plot tool visualizing least-squares regression. Manipulate data clusters to see variance skew.",
+                tags: ["Statistics", "Regression", "ML"],
                 liveUrl: "./LinearRegression/index.html",
-                repoUrl: "https://github.com/TheCodeheadMT/CS471/LinearRegression/index.html",
+                repoUrl: "https://github.com/TheCodeheadMT/CS471/LinearRegression",
                 icon: "trending-up"
             },
             {
                 title: "Classical ML",
-                description: "An interactive visualization exploring the mathematical decision boundaries of LDA, QDA, and SVM over 2D data clusters.",
-                tags: ["Machine Learning", "Classification", "Linear Algebra"],
+                description: "Visualization exploring the mathematical decision boundaries of LDA, QDA, and SVM.",
+                tags: ["Classification", "Linear Algebra"],
                 liveUrl: "./StatisticalML/index.html",
-                repoUrl: "https://github.com/TheCodeheadMT/CS471/StatisticalML/index.html",
+                repoUrl: "https://github.com/TheCodeheadMT/CS471/StatisticalML",
                 icon: "scatter-chart"
             },
             {
                 title: "ML Addict",
-                description: "Interactive learning tools that can help you understand different machine learning algorithms.",
-                tags: ["Linear Regression", "Neural Networks", "Recurrent Neural Network", "Q-Learning"],
-                liveUrl: "https://www.mladdict.com/",
-                repoUrl: "https://www.mladdict.com/",
-                icon: "network"
-            },
-
-
-
-            
-            // {
-            //     title: "Markdown Previewer",
-            //     description: "A sleek, side-by-side markdown editor and renderer with syntax highlighting.",
-            //     tags: ["React", "Markdown", "CSS"],
-            //     liveUrl: "https://YOUR_USERNAME.github.io/markdown-previewer", // Path if hosted in a separate repo
-            //     repoUrl: "https://github.com/YOUR_USERNAME/markdown-previewer",
-            //     icon: "file-text"
-            // },
-            // {
-            //     title: "Task Master",
-            //     description: "A kanban-style project management tool with local storage persistence.",
-            //     tags: ["Vanilla JS", "LocalDocs"],
-            //     liveUrl: "./task-master/",
-            //     repoUrl: "https://github.com/YOUR_USERNAME/dashboard-repo",
-            //     icon: "trello"
-            // }
+                description: "Interactive learning tools to help you understand different machine learning algorithms.",
+                tags: ["Neural Nets", "Q-Learning"],
+                liveUrl: "https://www.mladdict.com",
+                repoUrl: "https://www.mladdict.com",
+                icon: "brain-circuit"
+            }
         ];
 
-        // 2. Render Cards Dynamically
         const grid = document.getElementById('apps-grid');
         
         apps.forEach(app => {
             const card = document.createElement('div');
-            card.className = "bg-gray-800/50 border border-gray-800 rounded-xl p-6 hover:border-indigo-500/50 transition-all duration-300 flex flex-col justify-between group hover:-translate-y-1 shadow-lg";
+            // Reduced padding (p-5 instead of p-6) and scaled-down text elements
+            card.className = "bg-gray-800/40 backdrop-blur-sm border border-gray-700/50 rounded-xl p-5 hover:border-indigo-500/50 hover:bg-gray-800/60 transition-all duration-300 flex flex-col justify-between group hover:-translate-y-1 shadow-lg";
             
-            // Generate tags HTML
             const tagsHtml = app.tags.map(tag => 
-                `<span class="text-xs font-medium bg-gray-900 text-indigo-300 px-2.5 py-1 rounded-full border border-gray-700">${tag}</span>`
+                `<span class="text-[10px] font-medium bg-gray-900/80 text-indigo-300 px-2 py-0.5 rounded border border-gray-700">${tag}</span>`
             ).join('');
 
             card.innerHTML = `
                 <div>
-                    <div class="w-12 h-12 bg-indigo-600/10 rounded-lg flex items-center justify-center text-indigo-400 mb-4 group-hover:bg-indigo-600 group-hover:text-white transition-colors duration-300">
-                        <i data-lucide="${app.icon}"></i>
+                    <div class="w-10 h-10 bg-indigo-500/10 rounded-lg flex items-center justify-center text-indigo-400 mb-3 group-hover:bg-indigo-500 group-hover:text-white transition-colors duration-300">
+                        <i data-lucide="${app.icon}" class="w-5 h-5"></i>
                     </div>
-                    <h3 class="text-xl font-bold text-white mb-2">${app.title}</h3>
-                    <p class="text-gray-400 text-sm leading-relaxed mb-4">${app.description}</p>
+                    <h3 class="text-lg font-bold text-white mb-1.5">${app.title}</h3>
+                    <p class="text-gray-400 text-xs leading-relaxed mb-4">${app.description}</p>
                 </div>
                 <div>
-                    <div class="flex flex-wrap gap-2 mb-6">
+                    <div class="flex flex-wrap gap-1.5 mb-4">
                         ${tagsHtml}
                     </div>
-                    <div class="flex items-center justify-between border-t border-gray-700/50 pt-4">
-                        <a href="${app.repoUrl}" target="_blank" class="text-sm text-gray-400 hover:text-white flex items-center gap-1 transition-colors">
-                            <i data-lucide="code" class="w-4 h-4"></i> Source
+                    <div class="flex items-center justify-between border-t border-gray-700/50 pt-3">
+                        <a href="${app.repoUrl}" target="_blank" class="text-xs text-gray-400 hover:text-white flex items-center gap-1 transition-colors">
+                            <i data-lucide="code" class="w-3.5 h-3.5"></i> Source
                         </a>
-                        <a href="${app.liveUrl}" class="text-sm font-semibold text-indigo-400 hover:text-indigo-300 flex items-center gap-1 group-hover:translate-x-0.5 transition-transform">
-                            Launch App <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+                        <a href="${app.liveUrl}" class="text-xs font-semibold text-indigo-400 hover:text-indigo-300 flex items-center gap-1 group-hover:translate-x-0.5 transition-transform">
+                            Launch <i data-lucide="arrow-up-right" class="w-3.5 h-3.5"></i>
                         </a>
                     </div>
                 </div>
@@ -153,8 +145,102 @@
             grid.appendChild(card);
         });
 
-        // Initialize Lucide icons after DOM manipulation
         lucide.createIcons();
+    </script>
+
+    <script>
+        const canvas = document.getElementById('network-bg');
+        const ctx = canvas.getContext('2d');
+        
+        let width, height;
+        let particles = [];
+        
+        // Configuration
+        const config = {
+            particleCount: 80, // Number of nodes
+            maxDistance: 120,  // Distance to draw connections
+            particleSpeed: 0.5 // Movement speed
+        };
+
+        function resizeCanvas() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        }
+
+        class Particle {
+            constructor() {
+                this.x = Math.random() * width;
+                this.y = Math.random() * height;
+                this.vx = (Math.random() - 0.5) * config.particleSpeed;
+                this.vy = (Math.random() - 0.5) * config.particleSpeed;
+                this.radius = Math.random() * 1.5 + 0.5;
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+
+                // Bounce off edges
+                if (this.x < 0 || this.x > width) this.vx *= -1;
+                if (this.y < 0 || this.y > height) this.vy *= -1;
+            }
+
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(99, 102, 241, 0.4)'; // Indigo-500 with opacity
+                ctx.fill();
+            }
+        }
+
+        function initParticles() {
+            particles = [];
+            for (let i = 0; i < config.particleCount; i++) {
+                particles.push(new Particle());
+            }
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, width, height);
+            
+            // Update and draw particles
+            particles.forEach(p => {
+                p.update();
+                p.draw();
+            });
+
+            // Draw connecting lines
+            for (let i = 0; i < particles.length; i++) {
+                for (let j = i + 1; j < particles.length; j++) {
+                    const dx = particles[i].x - particles[j].x;
+                    const dy = particles[i].y - particles[j].y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+
+                    if (distance < config.maxDistance) {
+                        ctx.beginPath();
+                        ctx.moveTo(particles[i].x, particles[i].y);
+                        ctx.lineTo(particles[j].x, particles[j].y);
+                        // Opacity fades as distance increases
+                        const opacity = 1 - (distance / config.maxDistance);
+                        ctx.strokeStyle = `rgba(99, 102, 241, ${opacity * 0.3})`;
+                        ctx.lineWidth = 1;
+                        ctx.stroke();
+                    }
+                }
+            }
+
+            requestAnimationFrame(animate);
+        }
+
+        window.addEventListener('resize', () => {
+            resizeCanvas();
+            initParticles();
+        });
+
+        // Start
+        resizeCanvas();
+        initParticles();
+        animate();
     </script>
 </body>
 </html>

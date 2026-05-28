@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neural Network Architecture & Training Simulator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+      window.MathJax = { tex: { inlineMath: [['$', '$']], displayMath: [['$$', '$$']] } };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body class="bg-gray-900 text-gray-100 font-sans min-h-screen">
+
+    <nav class="border-b border-gray-800 bg-gray-950 px-6 py-4 flex items-center justify-between">
+        <a href="../index.html" class="flex items-center gap-2 text-indigo-400 hover:text-indigo-300 transition-colors">
+            <i data-lucide="arrow-left" class="w-4 h-4"></i> Back to Dashboard
+        </a>
+        <span class="font-bold tracking-tight text-gray-400">App #5: Deep Learning</span>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-4 py-8">
+        
+        <header class="mb-8">
+            <h1 class="text-3xl font-extrabold text-white mb-2">Neural Network Visualizer</h1>
+            <p class="text-gray-400">Design a feedforward architecture, explore non-linear activations, and visualize weight updates.</p>
+        </header>
+
+        <section class="bg-gray-800/40 border border-gray-800 rounded-xl p-6 mb-8 grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="md:col-span-2">
+                <h2 class="text-lg font-semibold text-sky-400 mb-2 flex items-center gap-2">
+                    <i data-lucide="brain-circuit" class="w-5 h-5"></i> The Perceptron Engine
+                </h2>
+                <p class="text-gray-300 text-sm leading-relaxed mb-2">
+                    A neural network processes data sequentially. Each node calculates a <strong>Weighted Sum</strong> of all incoming signals plus a bias, and passes that sum through a <strong>Non-linear Activation Function</strong> to decide if the signal should fire.
+                </p>
+                <p class="text-gray-400 text-xs italic">
+                    Hover over any hidden or output node in the canvas below to peek inside its active mathematical state!
+                </p>
+            </div>
+            <div class="bg-gray-900 p-4 rounded-lg border border-gray-800 flex flex-col justify-center text-xs font-mono text-sky-300 overflow-x-auto space-y-2">
+                <div><span class="text-gray-400">1. Weighted Sum:</span><br> $$z = \sum (w_i \cdot x_i) + b$$</div>
+                <div><span class="text-gray-400">2. Activation:</span><br> $$a = f(z)$$</div>
+            </div>
+        </section>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            
+            <div class="lg:col-span-4 space-y-6">
+                <div class="bg-gray-800/60 border border-gray-800 rounded-xl p-5 space-y-5">
+                    <h3 class="text-sm font-bold text-white uppercase tracking-wider border-b border-gray-700 pb-2">Architecture Configuration</h3>
+                    
+                    <div class="space-y-4 text-xs">
+                        <div>
+                            <div class="flex justify-between mb-1"><span class="text-gray-300 font-bold">Hidden Layers</span><span id="val-layers" class="text-sky-400 font-bold">2</span></div>
+                            <input type="range" id="param-layers" min="1" max="4" value="2" class="w-full h-1.5 bg-gray-700 accent-sky-500 rounded cursor-pointer">
+                        </div>
+                        <div>
+                            <div class="flex justify-between mb-1"><span class="text-gray-300 font-bold">Nodes per Hidden Layer</span><span id="val-nodes" class="text-sky-400 font-bold">4</span></div>
+                            <input type="range" id="param-nodes" min="2" max="6" value="4" class="w-full h-1.5 bg-gray-700 accent-sky-500 rounded cursor-pointer">
+                        </div>
+                        <div class="border-t border-gray-700/50 my-2 pt-2"></div>
+                        <div>
+                            <div class="flex justify-between mb-1"><span class="text-gray-300 font-bold">Output Nodes (Classes)</span><span id="val-outputs" class="text-emerald-400 font-bold">1</span></div>
+                            <input type="range" id="param-outputs" min="1" max="4" value="1" class="w-full h-1.5 bg-gray-700 accent-emerald-500 rounded cursor-pointer">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-gray-300 font-bold mb-1">Activation Function</label>
+                            <select id="param-activation" class="w-full bg-gray-900 border border-gray-700 rounded p-1.5 text-white cursor-pointer focus:ring-1 focus:ring-sky-500">
+                                <option value="relu">ReLU (Rectified Linear Unit)</option>
+                                <option value="sigmoid">Sigmoid (Logistic)</option>
+                                <option value="tanh">Hyperbolic Tangent (Tanh)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-gray-800/60 border border-gray-800 rounded-xl p-5">
+                    <h3 class="text-sm font-bold text-white uppercase tracking-wider border-b border-gray-700 pb-2 mb-4">Training Simulation</h3>
+                    <p class="text-xs text-gray-400 mb-4">
+                        Simulate a mini-batch training step. Watch how the backpropagation algorithm scales and flips weight connections.
+                    </p>
+                    <button id="btn-train" class="w-full bg-sky-600 hover:bg-sky-500 text-white font-bold py-2.5 px-4 rounded transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-sky-900/50">
+                        <i data-lucide="zap" class="w-4 h-4"></i> Simulate Weight Update Step
+                    </button>
+                    <div class="mt-4 flex gap-4 text-[10px] uppercase font-bold tracking-wider text-center w-full justify-center">
+                        <div class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-emerald-500"></span> Positive W</div>
+                        <div class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-rose-500"></span> Negative W</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="lg:col-span-8 flex flex-col space-y-6">
+                <div class="bg-gray-950 border border-gray-800 rounded-xl p-4 relative flex-1 min-h-[480px] flex flex-col justify-between overflow-hidden">
+                    <div class="w-full flex-1 relative group cursor-crosshair">
+                        <canvas id="nnCanvas" class="w-full h-full bg-gray-900/50 rounded-lg border border-gray-800 min-h-[300px]"></canvas>
+                        
+                        <div id="hover-box" class="absolute top-4 right-4 bg-gray-900/95 border border-gray-700 p-3 rounded-lg shadow-2xl backdrop-blur hidden max-w-xs transition-opacity duration-200">
+                            <span class="text-sky-400 font-bold text-[10px] uppercase tracking-wider mb-1 block">Selected Node Telemetry</span>
+                            <div id="hover-math" class="text-white text-xs font-mono">
+                                </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-gray-900 p-4 rounded-lg border border-gray-800 mt-4 text-xs font-mono overflow-x-auto shrink-0">
+                        <span class="text-gray-400 uppercase tracking-wider font-bold text-[10px] block mb-2">Live Node Activation Equation</span>
+                        <div id="nn-equation-live" class="text-center text-white text-sm py-2 min-h-[40px]">
+                            Hover over any hidden or output node to inspect its weights!
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        const canvas = document.getElementById('nnCanvas');
+        const ctx = canvas.getContext('2d');
+        const layersSlider = document.getElementById('param-layers');
+        const nodesSlider = document.getElementById('param-nodes');
+        const outputsSlider = document.getElementById('param-outputs');
+        const activationSelect = document.getElementById('param-activation');
+        const btnTrain = document.getElementById('btn-train');
+        const hoverBox = document.getElementById('hover-box');
+        const liveEqBox = document.getElementById('nn-equation-live');
+
+        // Neural Network Data Structure
+        let network = []; // Array of layers. Layer = Array of nodes. Node = {x, y, value, bias}
+        let weights = []; // weights[layerIndex][fromNode][toNode]
+        
+        let hoveredNode = null;
+        let hoveredLayer = null;
+
+        function initNetwork() {
+            const numHiddenLayers = parseInt(layersSlider.value);
+            const numHiddenNodes = parseInt(nodesSlider.value);
+            const numOutputs = parseInt(outputsSlider.value);
+            const numInputs = 3; // Fixed 3 input features for aesthetics
+
+            const layerSizes = [numInputs];
+            for(let i=0; i<numHiddenLayers; i++) layerSizes.push(numHiddenNodes);
+            layerSizes.push(numOutputs);
+
+            network = [];
+            weights = [];
+
+            // Initialize Nodes
+            for(let l=0; l<layerSizes.length; l++) {
+                let layer = [];
+                for(let n=0; n<layerSizes[l]; n++) {
+                    layer.push({
+                        x: 0, y: 0, 
+                        value: Math.random(), // Dummy feedforward signal
+                        bias: (Math.random() * 2) - 1 // Random bias [-1, 1]
+                    });
+                }
+                network.push(layer);
+            }
+
+            // Initialize Weights [-1, 1]
+            for(let l=0; l<network.length - 1; l++) {
+                let layerWeights = [];
+                for(let from=0; from<network[l].length; from++) {
+                    let nodeWeights = [];
+                    for(let to=0; to<network[l+1].length; to++) {
+                        nodeWeights.push((Math.random() * 2) - 1);
+                    }
+                    layerWeights.push(nodeWeights);
+                }
+                weights.push(layerWeights);
+            }
+
+            calculatePositions();
+            drawNetwork();
+        }
+
+        function calculatePositions() {
+            const rect = canvas.parentNode.getBoundingClientRect();
+            if(rect.width === 0) return;
+            const w = canvas.width = rect.width;
+            const h = canvas.height = rect.height || 300;
+
+            const paddingX = w * 0.1;
+            const paddingY = h * 0.15;
+            const usableW = w - (paddingX * 2);
+            const usableH = h - (paddingY * 2);
+
+            const gapX = network.length > 1 ? usableW / (network.length - 1) : 0;
+
+            for(let l=0; l<network.length; l++) {
+                const layer = network[l];
+                const gapY = layer.length > 1 ? usableH / (layer.length - 1) : 0;
+                const startY = layer.length > 1 ? paddingY : h / 2;
+
+                for(let n=0; n<layer.length; n++) {
+                    layer[n].x = paddingX + (l * gapX);
+                    layer[n].y = layer.length > 1 ? startY + (n * gapY) : startY;
+                }
+            }
+        }
+
+        function drawNetwork() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw Weights (Lines)
+            for(let l=0; l<weights.length; l++) {
+                for(let from=0; from<network[l].length; from++) {
+                    for(let to=0; to<network[l+1].length; to++) {
+                        const wVal = weights[l][from][to];
+                        const fromNode = network[l][from];
+                        const toNode = network[l+1][to];
+
+                        // Base transparency on weight strength, color on sign
+                        const strength = Math.min(Math.abs(wVal), 1.5);
+                        ctx.lineWidth = strength * 3;
+                        
+                        // Highlight logic if hovered
+                        const isHovered = (hoveredLayer === l+1 && hoveredNode === to);
+                        
+                        if(isHovered) {
+                            ctx.strokeStyle = wVal > 0 ? '#34d399' : '#fb7185'; // bright colors
+                            ctx.lineWidth = Math.max(ctx.lineWidth, 2);
+                        } else {
+                            ctx.strokeStyle = wVal > 0 ? `rgba(16, 185, 129, ${strength * 0.6})` : `rgba(225, 29, 72, ${strength * 0.6})`;
+                        }
+
+                        ctx.beginPath();
+                        ctx.moveTo(fromNode.x, fromNode.y);
+                        
+                        // Slight curve for aesthetic
+                        const cpX = (fromNode.x + toNode.x) / 2;
+                        ctx.bezierCurveTo(cpX, fromNode.y, cpX, toNode.y, toNode.x, toNode.y);
+                        ctx.stroke();
+                    }
+                }
+            }
+
+            // Draw Nodes
+            for(let l=0; l<network.length; l++) {
+                for(let n=0; n<network[l].length; n++) {
+                    const node = network[l][n];
+                    
+                    const isHovered = (hoveredLayer === l && hoveredNode === n);
+                    
+                    // Outer Glow
+                    if(isHovered) {
+                        ctx.beginPath(); ctx.arc(node.x, node.y, 14, 0, Math.PI*2);
+                        ctx.fillStyle = 'rgba(56, 189, 248, 0.3)'; ctx.fill();
+                    }
+
+                    // Node Circle
+                    ctx.beginPath();
+                    ctx.arc(node.x, node.y, 8, 0, Math.PI*2);
+                    
+                    if (l === 0) ctx.fillStyle = '#64748b'; // Input (Gray)
+                    else if (l === network.length - 1) ctx.fillStyle = '#10b981'; // Output (Emerald)
+                    else ctx.fillStyle = '#38bdf8'; // Hidden (Sky Blue)
+                    
+                    ctx.fill();
+                    ctx.strokeStyle = '#1e293b';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                }
+            }
+        }
+
+        function simulateTrainingStep() {
+            // Add random noise to weights to simulate backprop adjusting them
+            for(let l=0; l<weights.length; l++) {
+                for(let from=0; from<weights[l].length; from++) {
+                    for(let to=0; to<weights[l][from].length; to++) {
+                        // Nudge weights randomly between -0.3 and 0.3
+                        weights[l][from][to] += (Math.random() * 0.6) - 0.3;
+                        
+                        // Keep bounded for visualization purposes
+                        if(weights[l][from][to] > 2) weights[l][from][to] = 2;
+                        if(weights[l][from][to] < -2) weights[l][from][to] = -2;
+                    }
+                }
+            }
+            
+            // Also nudge biases
+            for(let l=1; l<network.length; l++) {
+                for(let n=0; n<network[l].length; n++) {
+                    network[l][n].bias += (Math.random() * 0.2) - 0.1;
+                }
+            }
+
+            drawNetwork();
+            
+            // Visual feedback on button
+            btnTrain.innerHTML = `<i data-lucide="check-circle" class="w-4 h-4"></i> Weights Updated!`;
+            lucide.createIcons();
+            setTimeout(() => {
+                btnTrain.innerHTML = `<i data-lucide="zap" class="w-4 h-4"></i> Simulate Weight Update Step`;
+                lucide.createIcons();
+            }, 800);
+            
+            updateMathBox();
+        }
+
+        // --- Interaction & Math Display ---
+        
+        function updateMathBox() {
+            if(hoveredLayer === null || hoveredLayer === 0) {
+                hoverBox.classList.add('hidden');
+                liveEqBox.innerHTML = `Hover over any hidden or output node to inspect its weights!`;
+                return;
+            }
+
+            const l = hoveredLayer;
+            const n = hoveredNode;
+            const node = network[l][n];
+            const prevLayer = network[l-1];
+            
+            // Reconstruct the math
+            let zString = ``;
+            let zTotal = 0;
+            
+            for(let prevNode=0; prevNode<prevLayer.length; prevNode++) {
+                const w = weights[l-1][prevNode][n];
+                const x = prevLayer[prevNode].value; // incoming signal
+                zTotal += (w * x);
+                zString += `(${w.toFixed(2)} \\cdot x_${prevNode+1}) + `;
+            }
+            
+            zTotal += node.bias;
+            zString += `(${node.bias.toFixed(2)})`; // bias
+
+            const actType = activationSelect.value;
+            let actFunc = '';
+            let aTotal = 0;
+            
+            if(actType === 'relu') { actFunc = '\\text{ReLU}'; aTotal = Math.max(0, zTotal); }
+            else if(actType === 'sigmoid') { actFunc = '\\sigma'; aTotal = 1 / (1 + Math.exp(-zTotal)); }
+            else if(actType === 'tanh') { actFunc = '\\text{tanh}'; aTotal = Math.tanh(zTotal); }
+
+            node.value = aTotal; // Update state
+
+            // Multi-line MathJax
+            const eqStr = `\\begin{align*}
+                z &= ${zString} \\\\
+                z &= ${zTotal.toFixed(3)} \\\\
+                a &= ${actFunc}(${zTotal.toFixed(3)}) = \\mathbf{${aTotal.toFixed(3)}}
+            \\end{align*}`;
+
+            liveEqBox.innerHTML = `$$${eqStr}$$`;
+            hoverBox.classList.remove('hidden');
+
+            if (window.MathJax && window.MathJax.typesetPromise) {
+                MathJax.typesetPromise([liveEqBox]);
+            }
+        }
+
+        canvas.addEventListener('mousemove', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+
+            let foundLayer = null;
+            let foundNode = null;
+
+            // Check collision with nodes (radius 8 + padding)
+            for(let l=0; l<network.length; l++) {
+                for(let n=0; n<network[l].length; n++) {
+                    const node = network[l][n];
+                    const dist = Math.sqrt(Math.pow(mouseX - node.x, 2) + Math.pow(mouseY - node.y, 2));
+                    
+                    if(dist < 15) {
+                        foundLayer = l;
+                        foundNode = n;
+                        break;
+                    }
+                }
+            }
+
+            if(foundLayer !== hoveredLayer || foundNode !== hoveredNode) {
+                hoveredLayer = foundLayer;
+                hoveredNode = foundNode;
+                drawNetwork(); // redraw to show/hide highlights
+                updateMathBox();
+            }
+        });
+
+        canvas.addEventListener('mouseleave', () => {
+            hoveredLayer = null;
+            hoveredNode = null;
+            drawNetwork();
+            updateMathBox();
+        });
+
+        // Event Listeners
+        [layersSlider, nodesSlider, outputsSlider].forEach(el => el.addEventListener('input', () => {
+            document.getElementById('val-layers').innerText = layersSlider.value;
+            document.getElementById('val-nodes').innerText = nodesSlider.value;
+            document.getElementById('val-outputs').innerText = outputsSlider.value;
+            initNetwork();
+        }));
+
+        activationSelect.addEventListener('change', updateMathBox);
+        btnTrain.addEventListener('click', simulateTrainingStep);
+
+        window.addEventListener('resize', () => {
+            calculatePositions();
+            drawNetwork();
+        });
+
+        // Init
+        initNetwork();
+        setTimeout(() => lucide.createIcons(), 200);
+
+    </script>
+</body>
+</html>

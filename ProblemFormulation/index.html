@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>State Space vs Search Tree Simulator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+      window.MathJax = { tex: { inlineMath: [['$', '$']], displayMath: [['$$', '$$']] } };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body class="bg-gray-900 text-gray-100 font-sans min-h-screen">
+
+    <!-- Top Navigation -->
+    <nav class="border-b border-gray-800 bg-gray-950 px-6 py-4 flex items-center justify-between">
+        <a href="../index.html" class="flex items-center gap-2 text-indigo-400 hover:text-indigo-300 transition-colors">
+            <i data-lucide="arrow-left" class="w-4 h-4"></i> Back to Dashboard
+        </a>
+        <span class="font-bold tracking-tight text-gray-400">App #6: Search Algorithms</span>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-4 py-8">
+        
+        <header class="mb-8">
+            <h1 class="text-3xl font-extrabold text-white mb-2">State Space vs. Search Tree</h1>
+            <p class="text-gray-400">Navigate a UAV through enemy territory to understand how search algorithms model problems.</p>
+        </header>
+
+        <!-- Problem Formulation Definitions -->
+        <section class="bg-gray-800/40 border border-gray-800 rounded-xl p-6 mb-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="col-span-1 md:col-span-2 lg:col-span-4 mb-2 border-b border-gray-700 pb-2">
+                <h2 class="text-lg font-semibold text-indigo-400 flex items-center gap-2">
+                    <i data-lucide="crosshair" class="w-5 h-5"></i> Formal Problem Definition
+                </h2>
+                <p class="text-sm text-gray-400 mt-1">Before an AI can search for a route, the problem must be formally defined.</p>
+            </div>
+            
+            <div class="bg-gray-900 p-4 rounded-lg border border-gray-800">
+                <h3 class="text-sky-400 font-bold text-xs uppercase tracking-wider mb-2">1. States ($S$)</h3>
+                <p class="text-xs text-gray-300">A representation of a physical configuration. Here, it is the specific waypoint the aircraft is currently located at.</p>
+                <div class="mt-2 font-mono text-[10px] text-gray-500">$S = \{Start, A, B, C, Goal\}$</div>
+            </div>
+            <div class="bg-gray-900 p-4 rounded-lg border border-gray-800">
+                <h3 class="text-sky-400 font-bold text-xs uppercase tracking-wider mb-2">2. Actions ($A$)</h3>
+                <p class="text-xs text-gray-300">The legal moves available from a given state. E.g., choosing which adjacent flight corridor to take next.</p>
+                <div class="mt-2 font-mono text-[10px] text-gray-500">$A(s) = \{\text{Fly to } x, \text{Fly to } y\}$</div>
+            </div>
+            <div class="bg-gray-900 p-4 rounded-lg border border-gray-800">
+                <h3 class="text-sky-400 font-bold text-xs uppercase tracking-wider mb-2">3. Successor Function</h3>
+                <p class="text-xs text-gray-300">The transition model. Given a state and an action, what is the resulting new state?</p>
+                <div class="mt-2 font-mono text-[10px] text-gray-500">$T(s, a) = s'$</div>
+            </div>
+            <div class="bg-gray-900 p-4 rounded-lg border border-gray-800">
+                <h3 class="text-emerald-400 font-bold text-xs uppercase tracking-wider mb-2">4. Goal Test</h3>
+                <p class="text-xs text-gray-300">A function that evaluates the current state to determine if the mission objective is achieved.</p>
+                <div class="mt-2 font-mono text-[10px] text-gray-500">Is $s == Goal$?</div>
+            </div>
+        </section>
+
+        <!-- Interactive Simulator -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            
+            <!-- Controls & Narrative Log -->
+            <div class="lg:col-span-4 space-y-4 flex flex-col">
+                <div class="bg-gray-800/60 border border-gray-800 rounded-xl p-5">
+                    <h3 class="text-sm font-bold text-white uppercase tracking-wider border-b border-gray-700 pb-2 mb-4">Simulation Controls</h3>
+                    <div class="flex gap-2">
+                        <button id="btn-step" onclick="nextStep()" class="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 px-4 rounded transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-indigo-900/50">
+                            <i data-lucide="play-circle" class="w-4 h-4"></i> Step Expansion
+                        </button>
+                        <button id="btn-reset" onclick="resetSim()" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-2.5 px-4 rounded transition-colors cursor-pointer">
+                            <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Event Log -->
+                <div class="bg-gray-950 border border-gray-800 rounded-xl p-5 flex-1 flex flex-col">
+                    <h3 class="text-sm font-bold text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                        <i data-lucide="terminal" class="w-4 h-4"></i> Mission Log
+                    </h3>
+                    <div id="log-container" class="space-y-3 overflow-y-auto max-h-[350px] text-xs">
+                        <!-- Logs injected here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Canvases -->
+            <div class="lg:col-span-8 flex flex-col space-y-4">
+                
+                <!-- State Space Graph Canvas -->
+                <div class="bg-gray-950 border border-gray-800 rounded-xl p-4 flex flex-col relative h-[280px]">
+                    <div class="flex justify-between items-center mb-2 z-10">
+                        <h3 class="text-sm font-bold text-white">1. The State Space Graph</h3>
+                        <span class="text-[10px] bg-gray-800 text-gray-400 px-2 py-1 rounded">Physical Map (5 Nodes Total)</span>
+                    </div>
+                    <canvas id="graphCanvas" class="absolute inset-0 w-full h-full rounded-lg"></canvas>
+                </div>
+
+                <!-- Search Tree Canvas -->
+                <div class="bg-gray-950 border border-gray-800 rounded-xl p-4 flex flex-col relative h-[380px]">
+                    <div class="flex justify-between items-start mb-2 z-10">
+                        <div>
+                            <h3 class="text-sm font-bold text-white">2. The Search Tree</h3>
+                            <p class="text-[10px] text-amber-400 font-mono mt-1">CRITICAL INSIGHT: Each tree node represents an ENTIRE PATH, not just a location.</p>
+                        </div>
+                        <span class="text-[10px] bg-gray-800 text-gray-400 px-2 py-1 rounded">Infinite Possible Nodes</span>
+                    </div>
+                    <canvas id="treeCanvas" class="absolute inset-0 w-full h-full rounded-lg"></canvas>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // DOM Elements
+        const graphCanvas = document.getElementById('graphCanvas');
+        const gCtx = graphCanvas.getContext('2d');
+        const treeCanvas = document.getElementById('treeCanvas');
+        const tCtx = treeCanvas.getContext('2d');
+        const logContainer = document.getElementById('log-container');
+        const btnStep = document.getElementById('btn-step');
+
+        // State Space Graph Definition (Physical Map)
+        const mapNodes = {
+            'S': { id: 'S', label: 'Airbase (Start)', x: 0.1, y: 0.5, color: '#3b82f6' },
+            'A': { id: 'A', label: 'SAM Threat Alpha', x: 0.4, y: 0.2, color: '#f43f5e' },
+            'B': { id: 'B', label: 'Radar Zone Bravo', x: 0.4, y: 0.8, color: '#f43f5e' },
+            'C': { id: 'C', label: 'Mountain Pass', x: 0.7, y: 0.2, color: '#94a3b8' },
+            'G': { id: 'G', label: 'Target (Goal)', x: 0.9, y: 0.5, color: '#10b981' }
+        };
+
+        const mapEdges = [
+            { from: 'S', to: 'A' }, { from: 'S', to: 'B' },
+            { from: 'A', to: 'B' }, { from: 'B', to: 'A' }, // Two-way edge (Cycle risk!)
+            { from: 'A', to: 'C' },
+            { from: 'B', to: 'C' }, { from: 'B', to: 'G' },
+            { from: 'C', to: 'G' }
+        ];
+
+        // Search Tree Definition (Scripted sequence for educational clarity)
+        const treeNodes = {
+            'S': { id: 'S', state: 'S', pathStr: 'S', x: 0.5, y: 0.15, level: 0 },
+            
+            // Level 1
+            'S-A': { id: 'S-A', state: 'A', pathStr: 'S → A', x: 0.25, y: 0.4, parent: 'S', level: 1 },
+            'S-B': { id: 'S-B', state: 'B', pathStr: 'S → B', x: 0.75, y: 0.4, parent: 'S', level: 1 },
+            
+            // Level 2 (Expanding S-A)
+            'S-A-B': { id: 'S-A-B', state: 'B', pathStr: 'S → A → B', x: 0.15, y: 0.65, parent: 'S-A', level: 2 },
+            'S-A-C': { id: 'S-A-C', state: 'C', pathStr: 'S → A → C', x: 0.35, y: 0.65, parent: 'S-A', level: 2 },
+            
+            // Level 2 (Expanding S-B)
+            'S-B-A': { id: 'S-B-A', state: 'A', pathStr: 'S → B → A', x: 0.6, y: 0.65, parent: 'S-B', level: 2, isCycle: true },
+            'S-B-C': { id: 'S-B-C', state: 'C', pathStr: 'S → B → C', x: 0.75, y: 0.65, parent: 'S-B', level: 2 },
+            'S-B-G': { id: 'S-B-G', state: 'G', pathStr: 'S → B → G', x: 0.9, y: 0.65, parent: 'S-B', level: 2, isGoal: true }
+        };
+
+        // Simulation State
+        let currentStep = 0;
+        let activeGraphNode = 'S';
+        let visibleTreeNodes = ['S'];
+        let activeTreeNodes = ['S'];
+
+        const sequence = [
+            { // Step 0
+                graphNode: 'S', 
+                treeVisible: ['S'], 
+                treeActive: ['S'],
+                log: `<span class="text-indigo-400 font-bold">INIT:</span> Aircraft is at the Airbase. The Search Tree begins with the initial state as the root node.`
+            },
+            { // Step 1
+                graphNode: 'S', 
+                treeVisible: ['S', 'S-A', 'S-B'], 
+                treeActive: ['S-A', 'S-B'],
+                log: `<span class="text-sky-400 font-bold">EXPAND 'S':</span> Generating successors. The aircraft can fly to SAM Threat Alpha (A) or Radar Zone Bravo (B). Two new branches are created.`
+            },
+            { // Step 2
+                graphNode: 'A', 
+                treeVisible: ['S', 'S-A', 'S-B', 'S-A-B', 'S-A-C'], 
+                treeActive: ['S-A-B', 'S-A-C'],
+                log: `<span class="text-sky-400 font-bold">EXPAND 'S → A':</span> Notice we are at physical location 'A'. Successors are 'B' and 'C'. Look at the tree: the node is labeled <strong class="text-white">S→A→B</strong>. It represents the entire flight history, not just location B.`
+            },
+            { // Step 3
+                graphNode: 'B', 
+                treeVisible: ['S', 'S-A', 'S-B', 'S-A-B', 'S-A-C', 'S-B-A', 'S-B-C', 'S-B-G'], 
+                treeActive: ['S-B-A', 'S-B-C', 'S-B-G'],
+                log: `<span class="text-sky-400 font-bold">EXPAND 'S → B':</span> Generating successors for the other branch. <br><br>
+                <span class="text-amber-400 font-bold">⚠ CYCLE DETECTED:</span> Node <strong class="text-white">S→B→A</strong> takes us back to 'A'. In the physical graph, we just turned around. In the tree, we created a brand new node. Without cycle detection, this branches infinitely!<br><br>
+                <span class="text-emerald-400 font-bold">✓ GOAL REACHED:</span> Node <strong class="text-white">S→B→G</strong> satisfies the Goal Test!`
+            }
+        ];
+
+        function resizeCanvases() {
+            const gRect = graphCanvas.parentNode.getBoundingClientRect();
+            if(gRect.width > 0) {
+                graphCanvas.width = gRect.width;
+                graphCanvas.height = gRect.height;
+            }
+
+            const tRect = treeCanvas.parentNode.getBoundingClientRect();
+            if(tRect.width > 0) {
+                treeCanvas.width = tRect.width;
+                treeCanvas.height = tRect.height;
+            }
+        }
+
+        function drawGraph() {
+            const w = graphCanvas.width;
+            const h = graphCanvas.height;
+            gCtx.clearRect(0, 0, w, h);
+
+            // Draw Edges
+            mapEdges.forEach(edge => {
+                const from = mapNodes[edge.from];
+                const to = mapNodes[edge.to];
+                
+                // If it's a two-way edge (A-B), curve it slightly so both are visible
+                let cpX = (from.x * w + to.x * w) / 2;
+                let cpY = (from.y * h + to.y * h) / 2;
+
+                if ((edge.from === 'A' && edge.to === 'B') || (edge.from === 'B' && edge.to === 'A')) {
+                    const offset = edge.from === 'A' ? 20 : -20;
+                    cpX += offset; 
+                }
+
+                gCtx.beginPath();
+                gCtx.moveTo(from.x * w, from.y * h);
+                gCtx.quadraticCurveTo(cpX, cpY, to.x * w, to.y * h);
+                
+                gCtx.strokeStyle = 'rgba(148, 163, 184, 0.3)';
+                gCtx.lineWidth = 2;
+                gCtx.stroke();
+
+                // Draw arrowhead
+                const angle = Math.atan2((to.y * h) - cpY, (to.x * w) - cpX);
+                gCtx.beginPath();
+                gCtx.moveTo(to.x * w, to.y * h);
+                gCtx.lineTo((to.x * w) - 10 * Math.cos(angle - Math.PI/6), (to.y * h) - 10 * Math.sin(angle - Math.PI/6));
+                gCtx.lineTo((to.x * w) - 10 * Math.cos(angle + Math.PI/6), (to.y * h) - 10 * Math.sin(angle + Math.PI/6));
+                gCtx.fillStyle = 'rgba(148, 163, 184, 0.8)';
+                gCtx.fill();
+            });
+
+            // Draw Nodes
+            Object.values(mapNodes).forEach(node => {
+                const nx = node.x * w;
+                const ny = node.y * h;
+
+                // Highlight active state
+                if (node.id === activeGraphNode) {
+                    gCtx.beginPath();
+                    gCtx.arc(nx, ny, 25, 0, Math.PI*2);
+                    gCtx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+                    gCtx.fill();
+                }
+
+                gCtx.beginPath();
+                gCtx.arc(nx, ny, 16, 0, Math.PI*2);
+                gCtx.fillStyle = node.color;
+                gCtx.fill();
+                gCtx.strokeStyle = '#0f172a';
+                gCtx.lineWidth = 3;
+                gCtx.stroke();
+
+                gCtx.fillStyle = '#ffffff';
+                gCtx.font = 'bold 14px sans-serif';
+                gCtx.textAlign = 'center';
+                gCtx.textBaseline = 'middle';
+                gCtx.fillText(node.id, nx, ny);
+
+                // Label
+                gCtx.fillStyle = '#94a3b8';
+                gCtx.font = '10px sans-serif';
+                gCtx.fillText(node.label, nx, ny + 25);
+            });
+        }
+
+        function drawTree() {
+            const w = treeCanvas.width;
+            const h = treeCanvas.height;
+            tCtx.clearRect(0, 0, w, h);
+
+            // Draw Edges first
+            visibleTreeNodes.forEach(id => {
+                const node = treeNodes[id];
+                if (node.parent) {
+                    const pNode = treeNodes[node.parent];
+                    tCtx.beginPath();
+                    tCtx.moveTo(pNode.x * w, pNode.y * h + 15);
+                    tCtx.lineTo(node.x * w, node.y * h - 15);
+                    
+                    if (activeTreeNodes.includes(id)) {
+                        tCtx.strokeStyle = '#6366f1';
+                        tCtx.lineWidth = 2;
+                    } else {
+                        tCtx.strokeStyle = '#475569';
+                        tCtx.lineWidth = 1.5;
+                    }
+                    tCtx.stroke();
+                }
+            });
+
+            // Draw Nodes
+            visibleTreeNodes.forEach(id => {
+                const node = treeNodes[id];
+                const nx = node.x * w;
+                const ny = node.y * h;
+                const isActive = activeTreeNodes.includes(id);
+
+                // Base rect
+                tCtx.fillStyle = isActive ? '#1e1b4b' : '#0f172a';
+                tCtx.strokeStyle = isActive ? '#6366f1' : '#334155';
+                
+                if (node.isCycle) tCtx.strokeStyle = '#f59e0b'; // Amber for cycle
+                if (node.isGoal) tCtx.strokeStyle = '#10b981';  // Emerald for goal
+
+                tCtx.lineWidth = 2;
+                
+                // Draw pill shape for path string
+                const textWidth = tCtx.measureText(node.pathStr).width + 30;
+                tCtx.beginPath();
+                tCtx.roundRect(nx - textWidth/2, ny - 15, textWidth, 30, 8);
+                tCtx.fill();
+                tCtx.stroke();
+
+                // Draw Text
+                tCtx.fillStyle = isActive ? '#ffffff' : '#94a3b8';
+                if (node.isCycle) tCtx.fillStyle = '#fbbf24';
+                if (node.isGoal) tCtx.fillStyle = '#34d399';
+                
+                tCtx.font = 'bold 12px monospace';
+                tCtx.textAlign = 'center';
+                tCtx.textBaseline = 'middle';
+                tCtx.fillText(node.pathStr, nx, ny);
+            });
+        }
+
+        function addLog(html) {
+            const div = document.createElement('div');
+            div.className = 'bg-gray-900 border border-gray-800 p-3 rounded text-gray-300 shadow-sm leading-relaxed';
+            div.innerHTML = html;
+            logContainer.appendChild(div);
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+
+        function nextStep() {
+            if (currentStep < sequence.length - 1) {
+                currentStep++;
+                applyState(currentStep);
+                
+                if (currentStep === sequence.length - 1) {
+                    btnStep.disabled = true;
+                    btnStep.classList.replace('bg-indigo-600', 'bg-gray-700');
+                    btnStep.classList.remove('hover:bg-indigo-500');
+                    btnStep.innerHTML = `<i data-lucide="check" class="w-4 h-4"></i> Simulation Complete`;
+                    lucide.createIcons();
+                }
+            }
+        }
+
+        function resetSim() {
+            currentStep = 0;
+            logContainer.innerHTML = '';
+            btnStep.disabled = false;
+            btnStep.classList.replace('bg-gray-700', 'bg-indigo-600');
+            btnStep.classList.add('hover:bg-indigo-500');
+            btnStep.innerHTML = `<i data-lucide="play-circle" class="w-4 h-4"></i> Step Expansion`;
+            lucide.createIcons();
+            applyState(currentStep);
+        }
+
+        function applyState(stepIndex) {
+            const state = sequence[stepIndex];
+            activeGraphNode = state.graphNode;
+            visibleTreeNodes = state.treeVisible;
+            activeTreeNodes = state.treeActive;
+            
+            addLog(state.log);
+            
+            drawGraph();
+            drawTree();
+        }
+
+        // Initialize
+        window.addEventListener('resize', () => {
+            resizeCanvases();
+            drawGraph();
+            drawTree();
+        });
+
+        setTimeout(() => {
+            lucide.createIcons();
+            resizeCanvases();
+            applyState(0);
+        }, 200);
+
+    </script>
+</body>
+</html>

@@ -4,12 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>State Space vs Search Tree Simulator</title>
+    <!-- Stable Tailwind v3 CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script>
       window.MathJax = { tex: { inlineMath: [['$', '$']], displayMath: [['$$', '$$']] } };
     </script>
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        /* Custom scrollbar for the massive tree views */
+        .tree-scroll::-webkit-scrollbar { width: 8px; height: 8px; }
+        .tree-scroll::-webkit-scrollbar-track { background: #0f172a; border-radius: 4px; }
+        .tree-scroll::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        .tree-scroll::-webkit-scrollbar-thumb:hover { background: #475569; }
+    </style>
 </head>
 <body class="bg-gray-900 text-gray-100 font-sans min-h-screen">
 
@@ -39,12 +47,12 @@
             
             <div class="bg-gray-900 p-4 rounded-lg border border-gray-800">
                 <h3 class="text-sky-400 font-bold text-xs uppercase tracking-wider mb-2">1. States ($S$)</h3>
-                <p class="text-xs text-gray-300">A representation of a physical configuration. Here, it is the specific waypoint the aircraft is currently located at.</p>
+                <p class="text-xs text-gray-300">A physical configuration. Here, it is the specific waypoint the aircraft is currently located at.</p>
                 <div class="mt-2 font-mono text-[10px] text-gray-500">$S = \{Start, A, B, C, Goal\}$</div>
             </div>
             <div class="bg-gray-900 p-4 rounded-lg border border-gray-800">
                 <h3 class="text-sky-400 font-bold text-xs uppercase tracking-wider mb-2">2. Actions ($A$)</h3>
-                <p class="text-xs text-gray-300">The legal moves available from a given state. E.g., choosing which adjacent flight corridor to take next.</p>
+                <p class="text-xs text-gray-300">The legal moves available. E.g., choosing which adjacent flight corridor to take next.</p>
                 <div class="mt-2 font-mono text-[10px] text-gray-500">$A(s) = \{\text{Fly to } x, \text{Fly to } y\}$</div>
             </div>
             <div class="bg-gray-900 p-4 rounded-lg border border-gray-800">
@@ -59,7 +67,20 @@
             </div>
         </section>
 
-        <!-- Interactive Simulator -->
+        <!-- Tabs -->
+        <div class="flex border-b border-gray-800 mb-6 space-x-4">
+            <button id="tab-btn-2" onclick="switchTab(2)" class="py-3 px-6 font-medium text-sm border-b-2 border-indigo-500 text-indigo-400 cursor-pointer">
+                Depth 2 Expansion
+            </button>
+            <button id="tab-btn-3" onclick="switchTab(3)" class="py-3 px-6 font-medium text-sm border-b-2 border-transparent text-gray-400 hover:text-gray-200 cursor-pointer">
+                Depth 3 Expansion
+            </button>
+            <button id="tab-btn-4" onclick="switchTab(4)" class="py-3 px-6 font-medium text-sm border-b-2 border-transparent text-gray-400 hover:text-gray-200 cursor-pointer">
+                Depth 4 (Explosion)
+            </button>
+        </div>
+
+        <!-- Interactive Simulator Layout -->
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
             
             <!-- Controls & Narrative Log -->
@@ -68,7 +89,7 @@
                     <h3 class="text-sm font-bold text-white uppercase tracking-wider border-b border-gray-700 pb-2 mb-4">Simulation Controls</h3>
                     <div class="flex gap-2">
                         <button id="btn-step" onclick="nextStep()" class="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 px-4 rounded transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-indigo-900/50">
-                            <i data-lucide="play-circle" class="w-4 h-4"></i> Step Expansion
+                            <i data-lucide="play-circle" class="w-4 h-4"></i> Step Next Level
                         </button>
                         <button id="btn-reset" onclick="resetSim()" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-2.5 px-4 rounded transition-colors cursor-pointer">
                             <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
@@ -76,8 +97,7 @@
                     </div>
                 </div>
 
-                <!-- Event Log -->
-                <div class="bg-gray-950 border border-gray-800 rounded-xl p-5 flex-1 flex flex-col">
+                <div class="bg-gray-950 border border-gray-800 rounded-xl p-5 flex-1 flex flex-col min-h-[250px]">
                     <h3 class="text-sm font-bold text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-2">
                         <i data-lucide="terminal" class="w-4 h-4"></i> Mission Log
                     </h3>
@@ -99,16 +119,23 @@
                     <canvas id="graphCanvas" class="absolute inset-0 w-full h-full rounded-lg"></canvas>
                 </div>
 
-                <!-- Search Tree Canvas -->
-                <div class="bg-gray-950 border border-gray-800 rounded-xl p-4 flex flex-col relative h-[380px]">
-                    <div class="flex justify-between items-start mb-2 z-10">
+                <!-- Search Tree Canvas (Scrollable horizontally) -->
+                <div class="bg-gray-950 border border-gray-800 rounded-xl p-4 flex flex-col relative h-[450px]">
+                    <div class="flex justify-between items-start mb-2 z-10 shrink-0">
                         <div>
                             <h3 class="text-sm font-bold text-white">2. The Search Tree</h3>
-                            <p class="text-[10px] text-amber-400 font-mono mt-1">CRITICAL INSIGHT: Each tree node represents an ENTIRE PATH, not just a location.</p>
+                            <p class="text-[10px] text-amber-400 font-mono mt-1">CRITICAL INSIGHT: Each tree node represents an ENTIRE PATH.</p>
                         </div>
-                        <span class="text-[10px] bg-gray-800 text-gray-400 px-2 py-1 rounded">Infinite Possible Nodes</span>
+                        <div class="flex gap-2">
+                            <span class="text-[10px] border border-amber-500/50 text-amber-400 px-2 py-1 rounded">Cycle/Repeated</span>
+                            <span class="text-[10px] border border-emerald-500/50 text-emerald-400 px-2 py-1 rounded">Goal Found</span>
+                        </div>
                     </div>
-                    <canvas id="treeCanvas" class="absolute inset-0 w-full h-full rounded-lg"></canvas>
+                    
+                    <!-- Scrollable Container for Dynamic Width Tree -->
+                    <div class="w-full flex-1 overflow-x-auto overflow-y-hidden tree-scroll relative mt-2">
+                        <canvas id="treeCanvas" class="absolute inset-0 h-full rounded-lg"></canvas>
+                    </div>
                 </div>
 
             </div>
@@ -124,7 +151,16 @@
         const logContainer = document.getElementById('log-container');
         const btnStep = document.getElementById('btn-step');
 
-        // State Space Graph Definition (Physical Map)
+        // Mathematical State Space Adjacency List
+        const adjList = {
+            'S': ['A', 'B'],
+            'A': ['S', 'B', 'C'],
+            'B': ['S', 'A', 'C', 'G'],
+            'C': ['A', 'B', 'G'],
+            'G': [] // Terminal state
+        };
+
+        // Physical Visual Map Locations
         const mapNodes = {
             'S': { id: 'S', label: 'Airbase', x: 0.1, y: 0.5, color: '#3b82f6' },
             'A': { id: 'A', label: 'SAM Alpha', x: 0.4, y: 0.2, color: '#f43f5e' },
@@ -133,117 +169,124 @@
             'G': { id: 'G', label: 'Target', x: 0.9, y: 0.5, color: '#10b981' }
         };
 
-        // Graph Edges (Corridors are assumed to be 2-way physical paths)
-        const mapEdges = [
-            { from: 'S', to: 'A' }, { from: 'S', to: 'B' },
-            { from: 'A', to: 'S' }, { from: 'B', to: 'S' }, // Explicit return paths
-            { from: 'A', to: 'B' }, { from: 'B', to: 'A' }, 
-            { from: 'A', to: 'C' }, { from: 'C', to: 'A' },
-            { from: 'B', to: 'C' }, { from: 'B', to: 'G' },
-            { from: 'C', to: 'G' }
+        // Internal State
+        let currentTargetDepth = 2; // Controlled by tabs
+        let currentVisibleLevel = 0;
+        let dynamicTree = {}; // Will be built dynamically
+
+        // Pre-defined narrative logs based on the current level being expanded
+        const levelLogs = [
+            `<span class="text-indigo-400 font-bold">LEVEL 0 (INIT):</span> The search tree begins with the initial state (S) as the root node. Physical UAV location is S.`,
+            `<span class="text-sky-400 font-bold">LEVEL 1 (EXPAND S):</span> The Successor Function processes 'S'. The map reveals legal corridors to A and B. The tree branches.`,
+            `<span class="text-sky-400 font-bold">LEVEL 2 (EXPAND FRONTIER):</span> Expanding paths S→A and S→B. <br><br><span class="text-amber-400 font-bold">⚠ CYCLE DETECTED:</span> Notice S→A→S and S→B→S. The aircraft just flew back to the start! If our algorithm is naive, this loop expands infinitely. <br><br><span class="text-emerald-400 font-bold">✓ GOAL REACHED:</span> Path S→B→G successfully hits the Goal Test!`,
+            `<span class="text-purple-400 font-bold">LEVEL 3 (EXPAND FRONTIER):</span> Expanding the remaining valid nodes. Notice the combinatorial explosion. We are generating paths like S→A→B→C, but we also generate cross-cycles like S→A→B→A (returning to a threat!).`,
+            `<span class="text-rose-400 font-bold">LEVEL 4 (EXPLOSION):</span> Expanding further. The tree is now massively wide. This visually demonstrates the <strong>Exponential Time Complexity $O(b^d)$</strong> of search algorithms. A 5-node map generated dozens of paths.`
         ];
 
-        // Search Tree Definition 
-        // Y-axis shifted down (0.25 -> 0.55 -> 0.85) to avoid overlapping text
-        // X-axis distributed to fit 7 child nodes perfectly
-        const treeNodes = {
-            'S': { id: 'S', state: 'S', pathStr: 'S', x: 0.5, y: 0.25, level: 0 },
-            
-            // Level 1
-            'S-A': { id: 'S-A', state: 'A', pathStr: 'S→A', x: 0.3, y: 0.55, parent: 'S', level: 1 },
-            'S-B': { id: 'S-B', state: 'B', pathStr: 'S→B', x: 0.7, y: 0.55, parent: 'S', level: 1 },
-            
-            // Level 2 (Expanding S-A) - includes return cycle to S
-            'S-A-S': { id: 'S-A-S', state: 'S', pathStr: 'S→A→S', x: 0.1, y: 0.85, parent: 'S-A', level: 2, isCycle: true },
-            'S-A-B': { id: 'S-A-B', state: 'B', pathStr: 'S→A→B', x: 0.233, y: 0.85, parent: 'S-A', level: 2 },
-            'S-A-C': { id: 'S-A-C', state: 'C', pathStr: 'S→A→C', x: 0.366, y: 0.85, parent: 'S-A', level: 2 },
-            
-            // Level 2 (Expanding S-B) - includes return cycle to S and cross cycle to A
-            'S-B-S': { id: 'S-B-S', state: 'S', pathStr: 'S→B→S', x: 0.5, y: 0.85, parent: 'S-B', level: 2, isCycle: true },
-            'S-B-A': { id: 'S-B-A', state: 'A', pathStr: 'S→B→A', x: 0.633, y: 0.85, parent: 'S-B', level: 2, isCycle: true },
-            'S-B-C': { id: 'S-B-C', state: 'C', pathStr: 'S→B→C', x: 0.766, y: 0.85, parent: 'S-B', level: 2 },
-            'S-B-G': { id: 'S-B-G', state: 'G', pathStr: 'S→B→G', x: 0.9, y: 0.85, parent: 'S-B', level: 2, isGoal: true }
-        };
+        // --- TREE GENERATION ALGORITHM ---
+        function generateTreeData(maxDepth) {
+            let tree = {};
+            let queue = [ { id: 'S', state: 'S', path: ['S'], level: 0, parent: null } ];
+            tree['S'] = queue[0];
 
-        // Simulation State
-        let currentStep = 0;
-        let activeGraphNode = 'S';
-        let visibleTreeNodes = ['S'];
-        let activeTreeNodes = ['S'];
+            while(queue.length > 0) {
+                let curr = queue.shift();
+                
+                // Stop expanding if we hit max depth OR if the current node is a Goal OR a Cycle
+                if(curr.level < maxDepth && !curr.isGoal && !curr.isCycle) {
+                    let neighbors = adjList[curr.state];
+                    
+                    neighbors.forEach(n => {
+                        let newPath = [...curr.path, n];
+                        let id = newPath.join('-'); // e.g. "S-A-B"
+                        
+                        // Detect Cycle (Did we visit 'n' already in this specific path?)
+                        let isCycle = curr.path.includes(n);
+                        let isGoal = (n === 'G');
 
-        const sequence = [
-            { // Step 0
-                graphNode: 'S', 
-                treeVisible: ['S'], 
-                treeActive: ['S'],
-                log: `<span class="text-indigo-400 font-bold">INIT:</span> Aircraft is at the Airbase. The Search Tree begins with the initial state as the root node.`
-            },
-            { // Step 1
-                graphNode: 'S', 
-                treeVisible: ['S', 'S-A', 'S-B'], 
-                treeActive: ['S-A', 'S-B'],
-                log: `<span class="text-sky-400 font-bold">EXPAND 'S':</span> Generating successors. The physical map reveals two legal corridors leading to 'A' and 'B'. The tree branches accordingly.`
-            },
-            { // Step 2
-                graphNode: 'A', 
-                treeVisible: ['S', 'S-A', 'S-B', 'S-A-S', 'S-A-B', 'S-A-C'], 
-                treeActive: ['S-A-S', 'S-A-B', 'S-A-C'],
-                log: `<span class="text-sky-400 font-bold">EXPAND 'S → A':</span> Notice we are at physical location 'A'. Successors are 'B', 'C', and returning to 'S'. <br><br>
-                <span class="text-amber-400 font-bold">⚠ CYCLE DETECTED:</span> Look at the tree—node <strong class="text-white">S→A→S</strong> immediately creates a cycle back to the airbase. If our algorithm is naive, this loop will repeat infinitely!`
-            },
-            { // Step 3
-                graphNode: 'B', 
-                treeVisible: ['S', 'S-A', 'S-B', 'S-A-S', 'S-A-B', 'S-A-C', 'S-B-S', 'S-B-A', 'S-B-C', 'S-B-G'], 
-                treeActive: ['S-B-S', 'S-B-A', 'S-B-C', 'S-B-G'],
-                log: `<span class="text-sky-400 font-bold">EXPAND 'S → B':</span> We expand the right branch. <br><br>
-                <span class="text-amber-400 font-bold">⚠ MORE CYCLES:</span> Nodes <strong class="text-white">S→B→S</strong> and <strong class="text-white">S→B→A</strong> represent paths that loop back into already explored territory.<br><br>
-                <span class="text-emerald-400 font-bold">✓ GOAL REACHED:</span> Node <strong class="text-white">S→B→G</strong> satisfies the Goal Test! Notice how the tree node represents the <em>entire flight path</em>.`
+                        let child = {
+                            id: id, state: n, path: newPath, level: curr.level + 1, parent: curr.id,
+                            isCycle: isCycle, isGoal: isGoal
+                        };
+                        
+                        tree[id] = child;
+                        queue.push(child);
+                    });
+                }
             }
-        ];
-
-        function resizeCanvases() {
-            const gRect = graphCanvas.parentNode.getBoundingClientRect();
-            if(gRect.width > 0) {
-                graphCanvas.width = gRect.width;
-                graphCanvas.height = gRect.height;
-            }
-
-            const tRect = treeCanvas.parentNode.getBoundingClientRect();
-            if(tRect.width > 0) {
-                treeCanvas.width = tRect.width;
-                treeCanvas.height = tRect.height;
-            }
+            return tree;
         }
 
+        // Calculates X coordinates using a bottom-up post-order traversal to center parents over children perfectly
+        function calculateTreeLayout(treeData) {
+            let leafCounter = 1;
+            
+            // Recursive function to assign logical X slots
+            function assignX(nodeId) {
+                let children = Object.values(treeData).filter(n => n.parent === nodeId);
+                if (children.length === 0) {
+                    treeData[nodeId].logicalX = leafCounter++;
+                } else {
+                    let sumX = 0;
+                    children.forEach(c => sumX += assignX(c.id));
+                    treeData[nodeId].logicalX = sumX / children.length;
+                }
+                return treeData[nodeId].logicalX;
+            }
+
+            assignX('S');
+            
+            // The canvas width requirement depends on the number of leaves
+            const totalLeaves = leafCounter - 1;
+            const pxPerLeaf = 100; // How much horizontal space each branch needs
+            const requiredWidth = Math.max(treeCanvas.parentNode.clientWidth, totalLeaves * pxPerLeaf);
+            
+            treeCanvas.width = requiredWidth;
+            treeCanvas.height = treeCanvas.parentNode.clientHeight - 40; // Subtract padding/header
+
+            // Normalize X and assign Y based on level
+            const w = treeCanvas.width;
+            const h = treeCanvas.height;
+            const maxLvl = currentTargetDepth;
+
+            Object.values(treeData).forEach(node => {
+                // Map logical X to pixel space (leaving 5% padding on edges)
+                node.x = (node.logicalX / (totalLeaves + 1)) * w;
+                // Distribute Y evenly down the canvas based on max depth
+                node.y = 40 + (node.level * ((h - 80) / maxLvl));
+            });
+        }
+
+        // --- DRAWING ROUTINES ---
         function drawGraph() {
-            const w = graphCanvas.width;
-            const h = graphCanvas.height;
+            const w = graphCanvas.width = graphCanvas.parentNode.clientWidth;
+            const h = graphCanvas.height = graphCanvas.parentNode.clientHeight;
             gCtx.clearRect(0, 0, w, h);
 
-            // Draw Edges
-            mapEdges.forEach(edge => {
-                const from = mapNodes[edge.from];
-                const to = mapNodes[edge.to];
-                
-                // Curve two-way edges slightly so both arrows are visible
-                let cpX = (from.x * w + to.x * w) / 2;
-                let cpY = (from.y * h + to.y * h) / 2;
+            // Determine which physical nodes are on the current "Frontier" (active leaves)
+            let frontierStates = new Set();
+            Object.values(dynamicTree).forEach(n => {
+                if(n.level === currentVisibleLevel) frontierStates.add(n.state);
+            });
 
-                if ((edge.from === 'A' && edge.to === 'B') || (edge.from === 'B' && edge.to === 'A') ||
-                    (edge.from === 'S' && edge.to === 'A') || (edge.from === 'A' && edge.to === 'S') ||
-                    (edge.from === 'S' && edge.to === 'B') || (edge.from === 'B' && edge.to === 'S')) {
-                    const offset = (edge.from < edge.to) ? 15 : -15; // Simple heuristic to offset opposing lines
-                    cpX += offset; 
-                    cpY += offset;
-                }
+            // Draw Physical Edges
+            gCtx.lineWidth = 1.5;
+            Object.keys(adjList).forEach(from => {
+                adjList[from].forEach(to => {
+                    const fn = mapNodes[from], tn = mapNodes[to];
+                    let cpX = (fn.x * w + tn.x * w) / 2;
+                    let cpY = (fn.y * h + tn.y * h) / 2;
+                    
+                    // Bend bidirectional edges
+                    if (from < to) { cpX += 15; cpY += 15; }
+                    else { cpX -= 15; cpY -= 15; }
 
-                gCtx.beginPath();
-                gCtx.moveTo(from.x * w, from.y * h);
-                gCtx.quadraticCurveTo(cpX, cpY, to.x * w, to.y * h);
-                
-                gCtx.strokeStyle = 'rgba(148, 163, 184, 0.3)';
-                gCtx.lineWidth = 1.5;
-                gCtx.stroke();
+                    gCtx.beginPath();
+                    gCtx.moveTo(fn.x * w, fn.y * h);
+                    gCtx.quadraticCurveTo(cpX, cpY, tn.x * w, tn.y * h);
+                    gCtx.strokeStyle = 'rgba(148, 163, 184, 0.3)';
+                    gCtx.stroke();
+                });
             });
 
             // Draw Nodes
@@ -251,95 +294,76 @@
                 const nx = node.x * w;
                 const ny = node.y * h;
 
-                // Highlight active state
-                if (node.id === activeGraphNode) {
-                    gCtx.beginPath();
-                    gCtx.arc(nx, ny, 25, 0, Math.PI*2);
-                    gCtx.fillStyle = 'rgba(255, 255, 255, 0.2)';
-                    gCtx.fill();
+                // Highlight active frontier nodes
+                if (frontierStates.has(node.id)) {
+                    gCtx.beginPath(); gCtx.arc(nx, ny, 25, 0, Math.PI*2);
+                    gCtx.fillStyle = 'rgba(99, 102, 241, 0.3)'; gCtx.fill();
                 }
 
-                gCtx.beginPath();
-                gCtx.arc(nx, ny, 16, 0, Math.PI*2);
-                gCtx.fillStyle = node.color;
-                gCtx.fill();
-                gCtx.strokeStyle = '#0f172a';
-                gCtx.lineWidth = 3;
-                gCtx.stroke();
+                gCtx.beginPath(); gCtx.arc(nx, ny, 16, 0, Math.PI*2);
+                gCtx.fillStyle = node.color; gCtx.fill();
+                gCtx.strokeStyle = '#0f172a'; gCtx.lineWidth = 3; gCtx.stroke();
 
-                gCtx.fillStyle = '#ffffff';
-                gCtx.font = 'bold 14px sans-serif';
-                gCtx.textAlign = 'center';
-                gCtx.textBaseline = 'middle';
+                gCtx.fillStyle = '#ffffff'; gCtx.font = 'bold 14px sans-serif';
+                gCtx.textAlign = 'center'; gCtx.textBaseline = 'middle';
                 gCtx.fillText(node.id, nx, ny);
 
-                // Label
-                gCtx.fillStyle = '#94a3b8';
-                gCtx.font = '10px sans-serif';
-                gCtx.fillText(node.label, nx, ny + 25);
+                gCtx.fillStyle = '#94a3b8'; gCtx.font = '10px sans-serif';
+                gCtx.fillText(node.label, nx, ny + 28);
             });
         }
 
         function drawTree() {
-            const w = treeCanvas.width;
-            const h = treeCanvas.height;
-            tCtx.clearRect(0, 0, w, h);
+            tCtx.clearRect(0, 0, treeCanvas.width, treeCanvas.height);
 
-            // Draw Edges first
-            visibleTreeNodes.forEach(id => {
-                const node = treeNodes[id];
+            // Filter nodes that should be visible currently
+            const visibleNodes = Object.values(dynamicTree).filter(n => n.level <= currentVisibleLevel);
+
+            // Draw Edges
+            visibleNodes.forEach(node => {
                 if (node.parent) {
-                    const pNode = treeNodes[node.parent];
+                    const pNode = dynamicTree[node.parent];
                     tCtx.beginPath();
-                    tCtx.moveTo(pNode.x * w, pNode.y * h + 15);
-                    tCtx.lineTo(node.x * w, node.y * h - 15);
+                    tCtx.moveTo(pNode.x, pNode.y + 12);
+                    tCtx.lineTo(node.x, node.y - 12);
                     
-                    if (activeTreeNodes.includes(id)) {
-                        tCtx.strokeStyle = '#6366f1';
-                        tCtx.lineWidth = 2;
-                    } else {
-                        tCtx.strokeStyle = '#475569';
-                        tCtx.lineWidth = 1.5;
-                    }
+                    tCtx.strokeStyle = (node.level === currentVisibleLevel) ? '#6366f1' : '#475569';
+                    tCtx.lineWidth = (node.level === currentVisibleLevel) ? 2 : 1.5;
                     tCtx.stroke();
                 }
             });
 
             // Draw Nodes
-            visibleTreeNodes.forEach(id => {
-                const node = treeNodes[id];
-                const nx = node.x * w;
-                const ny = node.y * h;
-                const isActive = activeTreeNodes.includes(id);
-
-                // Base rect
+            visibleNodes.forEach(node => {
+                const isActive = (node.level === currentVisibleLevel);
+                
                 tCtx.fillStyle = isActive ? '#1e1b4b' : '#0f172a';
                 tCtx.strokeStyle = isActive ? '#6366f1' : '#334155';
                 
-                if (node.isCycle) tCtx.strokeStyle = '#f59e0b'; // Amber for cycle
-                if (node.isGoal) tCtx.strokeStyle = '#10b981';  // Emerald for goal
+                if (node.isCycle) tCtx.strokeStyle = '#f59e0b';
+                if (node.isGoal) tCtx.strokeStyle = '#10b981';
 
-                tCtx.lineWidth = 2;
+                // Shrink font size slightly for Depth 4 to fit in the pills
+                tCtx.font = currentTargetDepth === 4 ? 'bold 9px monospace' : 'bold 11px monospace';
+                const pathStr = node.path.join('→');
+                const textWidth = tCtx.measureText(pathStr).width + 16;
                 
-                // Draw pill shape for path string (Font size scaled down to 10px to fit all children)
-                tCtx.font = 'bold 10px monospace';
-                const textWidth = tCtx.measureText(node.pathStr).width + 20;
                 tCtx.beginPath();
-                tCtx.roundRect(nx - textWidth/2, ny - 12, textWidth, 24, 6);
+                tCtx.roundRect(node.x - textWidth/2, node.y - 12, textWidth, 24, 4);
                 tCtx.fill();
                 tCtx.stroke();
 
-                // Draw Text
                 tCtx.fillStyle = isActive ? '#ffffff' : '#94a3b8';
                 if (node.isCycle) tCtx.fillStyle = '#fbbf24';
                 if (node.isGoal) tCtx.fillStyle = '#34d399';
                 
                 tCtx.textAlign = 'center';
                 tCtx.textBaseline = 'middle';
-                tCtx.fillText(node.pathStr, nx, ny);
+                tCtx.fillText(pathStr, node.x, node.y);
             });
         }
 
+        // --- SIMULATION CONTROLS ---
         function addLog(html) {
             const div = document.createElement('div');
             div.className = 'bg-gray-900 border border-gray-800 p-3 rounded text-gray-300 shadow-sm leading-relaxed';
@@ -348,55 +372,75 @@
             logContainer.scrollTop = logContainer.scrollHeight;
         }
 
+        function switchTab(depth) {
+            currentTargetDepth = depth;
+            
+            // Tab styling update
+            [2,3,4].forEach(d => {
+                const btn = document.getElementById(`tab-btn-${d}`);
+                btn.className = (d === depth) 
+                    ? "py-3 px-6 font-medium text-sm border-b-2 border-indigo-500 text-indigo-400 cursor-pointer"
+                    : "py-3 px-6 font-medium text-sm border-b-2 border-transparent text-gray-400 hover:text-gray-200 cursor-pointer";
+            });
+
+            // Rebuild entire tree logic and layout
+            dynamicTree = generateTreeData(currentTargetDepth);
+            calculateTreeLayout(dynamicTree);
+
+            // Re-render math if necessary
+            if (window.MathJax && window.MathJax.typesetPromise) {
+                MathJax.typesetPromise();
+            }
+
+            resetSim();
+        }
+
         function nextStep() {
-            if (currentStep < sequence.length - 1) {
-                currentStep++;
-                applyState(currentStep);
+            if (currentVisibleLevel < currentTargetDepth) {
+                currentVisibleLevel++;
+                addLog(levelLogs[currentVisibleLevel]);
+                drawGraph();
+                drawTree();
                 
-                if (currentStep === sequence.length - 1) {
+                // Check Completion
+                if (currentVisibleLevel === currentTargetDepth) {
                     btnStep.disabled = true;
                     btnStep.classList.replace('bg-indigo-600', 'bg-gray-700');
                     btnStep.classList.remove('hover:bg-indigo-500');
-                    btnStep.innerHTML = `<i data-lucide="check" class="w-4 h-4"></i> Simulation Complete`;
+                    btnStep.innerHTML = `<i data-lucide="check" class="w-4 h-4"></i> Expansion Complete`;
                     lucide.createIcons();
                 }
             }
         }
 
         function resetSim() {
-            currentStep = 0;
+            currentVisibleLevel = 0;
             logContainer.innerHTML = '';
+            
             btnStep.disabled = false;
             btnStep.classList.replace('bg-gray-700', 'bg-indigo-600');
             btnStep.classList.add('hover:bg-indigo-500');
-            btnStep.innerHTML = `<i data-lucide="play-circle" class="w-4 h-4"></i> Step Expansion`;
+            btnStep.innerHTML = `<i data-lucide="play-circle" class="w-4 h-4"></i> Step Next Level`;
+            
             lucide.createIcons();
-            applyState(currentStep);
-        }
-
-        function applyState(stepIndex) {
-            const state = sequence[stepIndex];
-            activeGraphNode = state.graphNode;
-            visibleTreeNodes = state.treeVisible;
-            activeTreeNodes = state.treeActive;
-            
-            addLog(state.log);
+            addLog(levelLogs[0]);
             
             drawGraph();
             drawTree();
         }
 
-        // Initialize
+        // Initialize Window
         window.addEventListener('resize', () => {
-            resizeCanvases();
-            drawGraph();
-            drawTree();
+            if(Object.keys(dynamicTree).length > 0) {
+                calculateTreeLayout(dynamicTree);
+                drawGraph();
+                drawTree();
+            }
         });
 
         setTimeout(() => {
             lucide.createIcons();
-            resizeCanvases();
-            applyState(0);
+            switchTab(2); // Start with depth 2 by default
         }, 200);
 
     </script>

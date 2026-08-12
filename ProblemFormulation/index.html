@@ -126,37 +126,43 @@
 
         // State Space Graph Definition (Physical Map)
         const mapNodes = {
-            'S': { id: 'S', label: 'Airbase (Start)', x: 0.1, y: 0.5, color: '#3b82f6' },
-            'A': { id: 'A', label: 'SAM Threat Alpha', x: 0.4, y: 0.2, color: '#f43f5e' },
-            'B': { id: 'B', label: 'Radar Zone Bravo', x: 0.4, y: 0.8, color: '#f43f5e' },
-            'C': { id: 'C', label: 'Mountain Pass', x: 0.7, y: 0.2, color: '#94a3b8' },
-            'G': { id: 'G', label: 'Target (Goal)', x: 0.9, y: 0.5, color: '#10b981' }
+            'S': { id: 'S', label: 'Airbase', x: 0.1, y: 0.5, color: '#3b82f6' },
+            'A': { id: 'A', label: 'SAM Alpha', x: 0.4, y: 0.2, color: '#f43f5e' },
+            'B': { id: 'B', label: 'Radar Bravo', x: 0.4, y: 0.8, color: '#f43f5e' },
+            'C': { id: 'C', label: 'Mountain', x: 0.7, y: 0.2, color: '#94a3b8' },
+            'G': { id: 'G', label: 'Target', x: 0.9, y: 0.5, color: '#10b981' }
         };
 
+        // Graph Edges (Corridors are assumed to be 2-way physical paths)
         const mapEdges = [
             { from: 'S', to: 'A' }, { from: 'S', to: 'B' },
-            { from: 'A', to: 'B' }, { from: 'B', to: 'A' }, // Two-way edge (Cycle risk!)
-            { from: 'A', to: 'C' },
+            { from: 'A', to: 'S' }, { from: 'B', to: 'S' }, // Explicit return paths
+            { from: 'A', to: 'B' }, { from: 'B', to: 'A' }, 
+            { from: 'A', to: 'C' }, { from: 'C', to: 'A' },
             { from: 'B', to: 'C' }, { from: 'B', to: 'G' },
             { from: 'C', to: 'G' }
         ];
 
-        // Search Tree Definition (Scripted sequence for educational clarity)
+        // Search Tree Definition 
+        // Y-axis shifted down (0.25 -> 0.55 -> 0.85) to avoid overlapping text
+        // X-axis distributed to fit 7 child nodes perfectly
         const treeNodes = {
-            'S': { id: 'S', state: 'S', pathStr: 'S', x: 0.5, y: 0.15, level: 0 },
+            'S': { id: 'S', state: 'S', pathStr: 'S', x: 0.5, y: 0.25, level: 0 },
             
             // Level 1
-            'S-A': { id: 'S-A', state: 'A', pathStr: 'S → A', x: 0.25, y: 0.4, parent: 'S', level: 1 },
-            'S-B': { id: 'S-B', state: 'B', pathStr: 'S → B', x: 0.75, y: 0.4, parent: 'S', level: 1 },
+            'S-A': { id: 'S-A', state: 'A', pathStr: 'S→A', x: 0.3, y: 0.55, parent: 'S', level: 1 },
+            'S-B': { id: 'S-B', state: 'B', pathStr: 'S→B', x: 0.7, y: 0.55, parent: 'S', level: 1 },
             
-            // Level 2 (Expanding S-A)
-            'S-A-B': { id: 'S-A-B', state: 'B', pathStr: 'S → A → B', x: 0.15, y: 0.65, parent: 'S-A', level: 2 },
-            'S-A-C': { id: 'S-A-C', state: 'C', pathStr: 'S → A → C', x: 0.35, y: 0.65, parent: 'S-A', level: 2 },
+            // Level 2 (Expanding S-A) - includes return cycle to S
+            'S-A-S': { id: 'S-A-S', state: 'S', pathStr: 'S→A→S', x: 0.1, y: 0.85, parent: 'S-A', level: 2, isCycle: true },
+            'S-A-B': { id: 'S-A-B', state: 'B', pathStr: 'S→A→B', x: 0.233, y: 0.85, parent: 'S-A', level: 2 },
+            'S-A-C': { id: 'S-A-C', state: 'C', pathStr: 'S→A→C', x: 0.366, y: 0.85, parent: 'S-A', level: 2 },
             
-            // Level 2 (Expanding S-B)
-            'S-B-A': { id: 'S-B-A', state: 'A', pathStr: 'S → B → A', x: 0.6, y: 0.65, parent: 'S-B', level: 2, isCycle: true },
-            'S-B-C': { id: 'S-B-C', state: 'C', pathStr: 'S → B → C', x: 0.75, y: 0.65, parent: 'S-B', level: 2 },
-            'S-B-G': { id: 'S-B-G', state: 'G', pathStr: 'S → B → G', x: 0.9, y: 0.65, parent: 'S-B', level: 2, isGoal: true }
+            // Level 2 (Expanding S-B) - includes return cycle to S and cross cycle to A
+            'S-B-S': { id: 'S-B-S', state: 'S', pathStr: 'S→B→S', x: 0.5, y: 0.85, parent: 'S-B', level: 2, isCycle: true },
+            'S-B-A': { id: 'S-B-A', state: 'A', pathStr: 'S→B→A', x: 0.633, y: 0.85, parent: 'S-B', level: 2, isCycle: true },
+            'S-B-C': { id: 'S-B-C', state: 'C', pathStr: 'S→B→C', x: 0.766, y: 0.85, parent: 'S-B', level: 2 },
+            'S-B-G': { id: 'S-B-G', state: 'G', pathStr: 'S→B→G', x: 0.9, y: 0.85, parent: 'S-B', level: 2, isGoal: true }
         };
 
         // Simulation State
@@ -176,21 +182,22 @@
                 graphNode: 'S', 
                 treeVisible: ['S', 'S-A', 'S-B'], 
                 treeActive: ['S-A', 'S-B'],
-                log: `<span class="text-sky-400 font-bold">EXPAND 'S':</span> Generating successors. The aircraft can fly to SAM Threat Alpha (A) or Radar Zone Bravo (B). Two new branches are created.`
+                log: `<span class="text-sky-400 font-bold">EXPAND 'S':</span> Generating successors. The physical map reveals two legal corridors leading to 'A' and 'B'. The tree branches accordingly.`
             },
             { // Step 2
                 graphNode: 'A', 
-                treeVisible: ['S', 'S-A', 'S-B', 'S-A-B', 'S-A-C'], 
-                treeActive: ['S-A-B', 'S-A-C'],
-                log: `<span class="text-sky-400 font-bold">EXPAND 'S → A':</span> Notice we are at physical location 'A'. Successors are 'B' and 'C'. Look at the tree: the node is labeled <strong class="text-white">S→A→B</strong>. It represents the entire flight history, not just location B.`
+                treeVisible: ['S', 'S-A', 'S-B', 'S-A-S', 'S-A-B', 'S-A-C'], 
+                treeActive: ['S-A-S', 'S-A-B', 'S-A-C'],
+                log: `<span class="text-sky-400 font-bold">EXPAND 'S → A':</span> Notice we are at physical location 'A'. Successors are 'B', 'C', and returning to 'S'. <br><br>
+                <span class="text-amber-400 font-bold">⚠ CYCLE DETECTED:</span> Look at the tree—node <strong class="text-white">S→A→S</strong> immediately creates a cycle back to the airbase. If our algorithm is naive, this loop will repeat infinitely!`
             },
             { // Step 3
                 graphNode: 'B', 
-                treeVisible: ['S', 'S-A', 'S-B', 'S-A-B', 'S-A-C', 'S-B-A', 'S-B-C', 'S-B-G'], 
-                treeActive: ['S-B-A', 'S-B-C', 'S-B-G'],
-                log: `<span class="text-sky-400 font-bold">EXPAND 'S → B':</span> Generating successors for the other branch. <br><br>
-                <span class="text-amber-400 font-bold">⚠ CYCLE DETECTED:</span> Node <strong class="text-white">S→B→A</strong> takes us back to 'A'. In the physical graph, we just turned around. In the tree, we created a brand new node. Without cycle detection, this branches infinitely!<br><br>
-                <span class="text-emerald-400 font-bold">✓ GOAL REACHED:</span> Node <strong class="text-white">S→B→G</strong> satisfies the Goal Test!`
+                treeVisible: ['S', 'S-A', 'S-B', 'S-A-S', 'S-A-B', 'S-A-C', 'S-B-S', 'S-B-A', 'S-B-C', 'S-B-G'], 
+                treeActive: ['S-B-S', 'S-B-A', 'S-B-C', 'S-B-G'],
+                log: `<span class="text-sky-400 font-bold">EXPAND 'S → B':</span> We expand the right branch. <br><br>
+                <span class="text-amber-400 font-bold">⚠ MORE CYCLES:</span> Nodes <strong class="text-white">S→B→S</strong> and <strong class="text-white">S→B→A</strong> represent paths that loop back into already explored territory.<br><br>
+                <span class="text-emerald-400 font-bold">✓ GOAL REACHED:</span> Node <strong class="text-white">S→B→G</strong> satisfies the Goal Test! Notice how the tree node represents the <em>entire flight path</em>.`
             }
         ];
 
@@ -218,13 +225,16 @@
                 const from = mapNodes[edge.from];
                 const to = mapNodes[edge.to];
                 
-                // If it's a two-way edge (A-B), curve it slightly so both are visible
+                // Curve two-way edges slightly so both arrows are visible
                 let cpX = (from.x * w + to.x * w) / 2;
                 let cpY = (from.y * h + to.y * h) / 2;
 
-                if ((edge.from === 'A' && edge.to === 'B') || (edge.from === 'B' && edge.to === 'A')) {
-                    const offset = edge.from === 'A' ? 20 : -20;
+                if ((edge.from === 'A' && edge.to === 'B') || (edge.from === 'B' && edge.to === 'A') ||
+                    (edge.from === 'S' && edge.to === 'A') || (edge.from === 'A' && edge.to === 'S') ||
+                    (edge.from === 'S' && edge.to === 'B') || (edge.from === 'B' && edge.to === 'S')) {
+                    const offset = (edge.from < edge.to) ? 15 : -15; // Simple heuristic to offset opposing lines
                     cpX += offset; 
+                    cpY += offset;
                 }
 
                 gCtx.beginPath();
@@ -232,17 +242,8 @@
                 gCtx.quadraticCurveTo(cpX, cpY, to.x * w, to.y * h);
                 
                 gCtx.strokeStyle = 'rgba(148, 163, 184, 0.3)';
-                gCtx.lineWidth = 2;
+                gCtx.lineWidth = 1.5;
                 gCtx.stroke();
-
-                // Draw arrowhead
-                const angle = Math.atan2((to.y * h) - cpY, (to.x * w) - cpX);
-                gCtx.beginPath();
-                gCtx.moveTo(to.x * w, to.y * h);
-                gCtx.lineTo((to.x * w) - 10 * Math.cos(angle - Math.PI/6), (to.y * h) - 10 * Math.sin(angle - Math.PI/6));
-                gCtx.lineTo((to.x * w) - 10 * Math.cos(angle + Math.PI/6), (to.y * h) - 10 * Math.sin(angle + Math.PI/6));
-                gCtx.fillStyle = 'rgba(148, 163, 184, 0.8)';
-                gCtx.fill();
             });
 
             // Draw Nodes
@@ -320,10 +321,11 @@
 
                 tCtx.lineWidth = 2;
                 
-                // Draw pill shape for path string
-                const textWidth = tCtx.measureText(node.pathStr).width + 30;
+                // Draw pill shape for path string (Font size scaled down to 10px to fit all children)
+                tCtx.font = 'bold 10px monospace';
+                const textWidth = tCtx.measureText(node.pathStr).width + 20;
                 tCtx.beginPath();
-                tCtx.roundRect(nx - textWidth/2, ny - 15, textWidth, 30, 8);
+                tCtx.roundRect(nx - textWidth/2, ny - 12, textWidth, 24, 6);
                 tCtx.fill();
                 tCtx.stroke();
 
@@ -332,7 +334,6 @@
                 if (node.isCycle) tCtx.fillStyle = '#fbbf24';
                 if (node.isGoal) tCtx.fillStyle = '#34d399';
                 
-                tCtx.font = 'bold 12px monospace';
                 tCtx.textAlign = 'center';
                 tCtx.textBaseline = 'middle';
                 tCtx.fillText(node.pathStr, nx, ny);

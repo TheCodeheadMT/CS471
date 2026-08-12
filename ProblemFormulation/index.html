@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>State Space vs Search Tree Simulator</title>
-    <!-- Stable Tailwind v3 CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script>
@@ -12,7 +11,6 @@
     </script>
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <style>
-        /* Custom scrollbar for the massive tree views */
         .tree-scroll::-webkit-scrollbar { width: 8px; height: 8px; }
         .tree-scroll::-webkit-scrollbar-track { background: #0f172a; border-radius: 4px; }
         .tree-scroll::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
@@ -21,7 +19,6 @@
 </head>
 <body class="bg-gray-900 text-gray-100 font-sans min-h-screen">
 
-    <!-- Top Navigation -->
     <nav class="border-b border-gray-800 bg-gray-950 px-6 py-4 flex items-center justify-between">
         <a href="../index.html" class="flex items-center gap-2 text-indigo-400 hover:text-indigo-300 transition-colors">
             <i data-lucide="arrow-left" class="w-4 h-4"></i> Back to Dashboard
@@ -33,7 +30,7 @@
         
         <header class="mb-8">
             <h1 class="text-3xl font-extrabold text-white mb-2">State Space vs. Search Tree</h1>
-            <p class="text-gray-400">Navigate a UAV through enemy territory to understand how search algorithms model problems.</p>
+            <p class="text-gray-400">Navigate a UAV through enemy territory to understand how search algorithms model weighted problems.</p>
         </header>
 
         <!-- Problem Formulation Definitions -->
@@ -42,7 +39,7 @@
                 <h2 class="text-lg font-semibold text-indigo-400 flex items-center gap-2">
                     <i data-lucide="crosshair" class="w-5 h-5"></i> Formal Problem Definition
                 </h2>
-                <p class="text-sm text-gray-400 mt-1">Before an AI can search for a route, the problem must be formally defined.</p>
+                <p class="text-sm text-gray-400 mt-1">Before an AI can search for a route, the problem must be formally defined into these four components.</p>
             </div>
             
             <div class="bg-gray-900 p-4 rounded-lg border border-gray-800">
@@ -57,8 +54,12 @@
             </div>
             <div class="bg-gray-900 p-4 rounded-lg border border-gray-800">
                 <h3 class="text-sky-400 font-bold text-xs uppercase tracking-wider mb-2">3. Successor Function</h3>
-                <p class="text-xs text-gray-300">The transition model. Given a state and an action, what is the resulting new state?</p>
-                <div class="mt-2 font-mono text-[10px] text-gray-500">$T(s, a) = s'$</div>
+                <p class="text-xs text-gray-300">The transition model. Given a state and action, what is the new state and the <strong>step cost</strong>?</p>
+                <div class="mt-2 font-mono text-[9px] sm:text-[10px] text-sky-200 bg-sky-900/20 p-2 rounded border border-sky-900/50">
+                    $T(s, a) = (s', c)$<br><br>
+                    Ex: $T(S, \text{Fly to B}) = (B, 12)$<br>
+                    Cost Math: $c(S, B) = 12$
+                </div>
             </div>
             <div class="bg-gray-900 p-4 rounded-lg border border-gray-800">
                 <h3 class="text-emerald-400 font-bold text-xs uppercase tracking-wider mb-2">4. Goal Test</h3>
@@ -114,7 +115,7 @@
                 <div class="bg-gray-950 border border-gray-800 rounded-xl p-4 flex flex-col relative h-[280px]">
                     <div class="flex justify-between items-center mb-2 z-10">
                         <h3 class="text-sm font-bold text-white">1. The State Space Graph</h3>
-                        <span class="text-[10px] bg-gray-800 text-gray-400 px-2 py-1 rounded">Physical Map (5 Nodes Total)</span>
+                        <span class="text-[10px] bg-gray-800 text-gray-400 px-2 py-1 rounded">Physical Map w/ Costs</span>
                     </div>
                     <canvas id="graphCanvas" class="absolute inset-0 w-full h-full rounded-lg"></canvas>
                 </div>
@@ -124,7 +125,7 @@
                     <div class="flex justify-between items-start mb-2 z-10 shrink-0">
                         <div>
                             <h3 class="text-sm font-bold text-white">2. The Search Tree</h3>
-                            <p class="text-[10px] text-amber-400 font-mono mt-1">CRITICAL INSIGHT: Each tree node represents an ENTIRE PATH.</p>
+                            <p class="text-[10px] text-amber-400 font-mono mt-1">Number in brackets is the cumulative path cost $g(n)$.</p>
                         </div>
                         <div class="flex gap-2">
                             <span class="text-[10px] border border-amber-500/50 text-amber-400 px-2 py-1 rounded">Cycle/Repeated</span>
@@ -132,7 +133,6 @@
                         </div>
                     </div>
                     
-                    <!-- Scrollable Container for Dynamic Width Tree -->
                     <div class="w-full flex-1 overflow-x-auto overflow-y-hidden tree-scroll relative mt-2">
                         <canvas id="treeCanvas" class="absolute inset-0 h-full rounded-lg"></canvas>
                     </div>
@@ -143,7 +143,6 @@
     </main>
 
     <script>
-        // DOM Elements
         const graphCanvas = document.getElementById('graphCanvas');
         const gCtx = graphCanvas.getContext('2d');
         const treeCanvas = document.getElementById('treeCanvas');
@@ -151,14 +150,22 @@
         const logContainer = document.getElementById('log-container');
         const btnStep = document.getElementById('btn-step');
 
-        // Mathematical State Space Adjacency List
+        // Mathematical State Space Adjacency List WITH COSTS
         const adjList = {
-            'S': ['A', 'B'],
-            'A': ['S', 'B', 'C'],
-            'B': ['S', 'A', 'C', 'G'],
-            'C': ['A', 'B', 'G'],
+            'S': [{to: 'A', cost: 5}, {to: 'B', cost: 12}],
+            'A': [{to: 'S', cost: 5}, {to: 'B', cost: 4}, {to: 'C', cost: 8}],
+            'B': [{to: 'S', cost: 12}, {to: 'A', cost: 4}, {to: 'C', cost: 3}, {to: 'G', cost: 15}],
+            'C': [{to: 'A', cost: 8}, {to: 'B', cost: 3}, {to: 'G', cost: 5}],
             'G': [] // Terminal state
         };
+
+        // For drawing unique undirected edges cleanly
+        const mapEdges = [
+            { from: 'S', to: 'A', cost: 5 }, { from: 'S', to: 'B', cost: 12 },
+            { from: 'A', to: 'B', cost: 4 }, { from: 'A', to: 'C', cost: 8 },
+            { from: 'B', to: 'C', cost: 3 }, { from: 'B', to: 'G', cost: 15 },
+            { from: 'C', to: 'G', cost: 5 }
+        ];
 
         // Physical Visual Map Locations
         const mapNodes = {
@@ -170,43 +177,41 @@
         };
 
         // Internal State
-        let currentTargetDepth = 2; // Controlled by tabs
+        let currentTargetDepth = 2;
         let currentVisibleLevel = 0;
-        let dynamicTree = {}; // Will be built dynamically
+        let dynamicTree = {}; 
 
         // Pre-defined narrative logs based on the current level being expanded
         const levelLogs = [
-            `<span class="text-indigo-400 font-bold">LEVEL 0 (INIT):</span> The search tree begins with the initial state (S) as the root node. Physical UAV location is S.`,
-            `<span class="text-sky-400 font-bold">LEVEL 1 (EXPAND S):</span> The Successor Function processes 'S'. The map reveals legal corridors to A and B. The tree branches.`,
-            `<span class="text-sky-400 font-bold">LEVEL 2 (EXPAND FRONTIER):</span> Expanding paths S→A and S→B. <br><br><span class="text-amber-400 font-bold">⚠ CYCLE DETECTED:</span> Notice S→A→S and S→B→S. The aircraft just flew back to the start! If our algorithm is naive, this loop expands infinitely. <br><br><span class="text-emerald-400 font-bold">✓ GOAL REACHED:</span> Path S→B→G successfully hits the Goal Test!`,
-            `<span class="text-purple-400 font-bold">LEVEL 3 (EXPAND FRONTIER):</span> Expanding the remaining valid nodes. Notice the combinatorial explosion. We are generating paths like S→A→B→C, but we also generate cross-cycles like S→A→B→A (returning to a threat!).`,
-            `<span class="text-rose-400 font-bold">LEVEL 4 (EXPLOSION):</span> Expanding further. The tree is now massively wide. This visually demonstrates the <strong>Exponential Time Complexity $O(b^d)$</strong> of search algorithms. A 5-node map generated dozens of paths.`
+            `<span class="text-indigo-400 font-bold">LEVEL 0 (INIT):</span> The search tree begins with the initial state (S). Cumulative cost $g(n) = 0$.`,
+            `<span class="text-sky-400 font-bold">LEVEL 1 (EXPAND S):</span> The map reveals legal corridors to A (cost: 5) and B (cost: 12). The tree branches calculate their running totals.`,
+            `<span class="text-sky-400 font-bold">LEVEL 2 (EXPAND FRONTIER):</span> <br><br><strong>Cost Insight:</strong> Flying directly S→B costs 12. But look at node <strong class="text-white">S→A→B [9]</strong>! Taking the detour through 'A' is actually cheaper (5 + 4 = 9). This is why algorithms evaluate cumulative costs!<br><br><span class="text-amber-400 font-bold">⚠ CYCLE:</span> S→A→S loops back to start.`,
+            `<span class="text-purple-400 font-bold">LEVEL 3 (EXPAND FRONTIER):</span> Expanding the remaining valid nodes. <br><br><span class="text-emerald-400 font-bold">✓ GOAL REACHED:</span> Path S→A→B→G reaches the target with a cost of 24 (5+4+15). Is it optimal? We must keep searching to be sure.`,
+            `<span class="text-rose-400 font-bold">LEVEL 4 (EXPLOSION):</span> The tree is massive, demonstrating <strong>Exponential Time Complexity $O(b^d)$</strong>. <br><br><span class="text-emerald-400 font-bold">✓ OPTIMAL GOAL:</span> Path <strong class="text-white">S→A→C→G [18]</strong> is found! (5+8+5). This proves that the earlier path (Cost 24) was sub-optimal.`
         ];
 
         // --- TREE GENERATION ALGORITHM ---
         function generateTreeData(maxDepth) {
             let tree = {};
-            let queue = [ { id: 'S', state: 'S', path: ['S'], level: 0, parent: null } ];
+            let queue = [ { id: 'S', state: 'S', path: ['S'], level: 0, parent: null, cost: 0 } ];
             tree['S'] = queue[0];
 
             while(queue.length > 0) {
                 let curr = queue.shift();
                 
-                // Stop expanding if we hit max depth OR if the current node is a Goal OR a Cycle
                 if(curr.level < maxDepth && !curr.isGoal && !curr.isCycle) {
                     let neighbors = adjList[curr.state];
                     
                     neighbors.forEach(n => {
-                        let newPath = [...curr.path, n];
-                        let id = newPath.join('-'); // e.g. "S-A-B"
+                        let newPath = [...curr.path, n.to];
+                        let id = newPath.join('-');
                         
-                        // Detect Cycle (Did we visit 'n' already in this specific path?)
-                        let isCycle = curr.path.includes(n);
-                        let isGoal = (n === 'G');
+                        let isCycle = curr.path.includes(n.to);
+                        let isGoal = (n.to === 'G');
 
                         let child = {
-                            id: id, state: n, path: newPath, level: curr.level + 1, parent: curr.id,
-                            isCycle: isCycle, isGoal: isGoal
+                            id: id, state: n.to, path: newPath, level: curr.level + 1, parent: curr.id,
+                            isCycle: isCycle, isGoal: isGoal, cost: curr.cost + n.cost
                         };
                         
                         tree[id] = child;
@@ -217,11 +222,9 @@
             return tree;
         }
 
-        // Calculates X coordinates using a bottom-up post-order traversal to center parents over children perfectly
         function calculateTreeLayout(treeData) {
             let leafCounter = 1;
             
-            // Recursive function to assign logical X slots
             function assignX(nodeId) {
                 let children = Object.values(treeData).filter(n => n.parent === nodeId);
                 if (children.length === 0) {
@@ -236,23 +239,19 @@
 
             assignX('S');
             
-            // The canvas width requirement depends on the number of leaves
             const totalLeaves = leafCounter - 1;
-            const pxPerLeaf = 100; // How much horizontal space each branch needs
+            const pxPerLeaf = 100;
             const requiredWidth = Math.max(treeCanvas.parentNode.clientWidth, totalLeaves * pxPerLeaf);
             
             treeCanvas.width = requiredWidth;
-            treeCanvas.height = treeCanvas.parentNode.clientHeight - 40; // Subtract padding/header
+            treeCanvas.height = treeCanvas.parentNode.clientHeight - 40;
 
-            // Normalize X and assign Y based on level
             const w = treeCanvas.width;
             const h = treeCanvas.height;
             const maxLvl = currentTargetDepth;
 
             Object.values(treeData).forEach(node => {
-                // Map logical X to pixel space (leaving 5% padding on edges)
                 node.x = (node.logicalX / (totalLeaves + 1)) * w;
-                // Distribute Y evenly down the canvas based on max depth
                 node.y = 40 + (node.level * ((h - 80) / maxLvl));
             });
         }
@@ -263,30 +262,39 @@
             const h = graphCanvas.height = graphCanvas.parentNode.clientHeight;
             gCtx.clearRect(0, 0, w, h);
 
-            // Determine which physical nodes are on the current "Frontier" (active leaves)
             let frontierStates = new Set();
             Object.values(dynamicTree).forEach(n => {
                 if(n.level === currentVisibleLevel) frontierStates.add(n.state);
             });
 
-            // Draw Physical Edges
-            gCtx.lineWidth = 1.5;
-            Object.keys(adjList).forEach(from => {
-                adjList[from].forEach(to => {
-                    const fn = mapNodes[from], tn = mapNodes[to];
-                    let cpX = (fn.x * w + tn.x * w) / 2;
-                    let cpY = (fn.y * h + tn.y * h) / 2;
-                    
-                    // Bend bidirectional edges
-                    if (from < to) { cpX += 15; cpY += 15; }
-                    else { cpX -= 15; cpY -= 15; }
+            // Draw Physical Edges with Straight Lines to center cost badges perfectly
+            mapEdges.forEach(edge => {
+                const fn = mapNodes[edge.from], tn = mapNodes[edge.to];
+                
+                gCtx.beginPath();
+                gCtx.moveTo(fn.x * w, fn.y * h);
+                gCtx.lineTo(tn.x * w, tn.y * h);
+                gCtx.strokeStyle = 'rgba(148, 163, 184, 0.4)';
+                gCtx.lineWidth = 2;
+                gCtx.stroke();
 
-                    gCtx.beginPath();
-                    gCtx.moveTo(fn.x * w, fn.y * h);
-                    gCtx.quadraticCurveTo(cpX, cpY, tn.x * w, tn.y * h);
-                    gCtx.strokeStyle = 'rgba(148, 163, 184, 0.3)';
-                    gCtx.stroke();
-                });
+                // Cost Badge
+                const midX = (fn.x * w + tn.x * w) / 2;
+                const midY = (fn.y * h + tn.y * h) / 2;
+                
+                gCtx.fillStyle = '#0f172a';
+                gCtx.beginPath();
+                gCtx.arc(midX, midY, 11, 0, Math.PI*2);
+                gCtx.fill();
+                gCtx.strokeStyle = '#38bdf8';
+                gCtx.lineWidth = 1;
+                gCtx.stroke();
+
+                gCtx.fillStyle = '#38bdf8';
+                gCtx.font = 'bold 11px sans-serif';
+                gCtx.textAlign = 'center';
+                gCtx.textBaseline = 'middle';
+                gCtx.fillText(edge.cost, midX, midY);
             });
 
             // Draw Nodes
@@ -294,7 +302,6 @@
                 const nx = node.x * w;
                 const ny = node.y * h;
 
-                // Highlight active frontier nodes
                 if (frontierStates.has(node.id)) {
                     gCtx.beginPath(); gCtx.arc(nx, ny, 25, 0, Math.PI*2);
                     gCtx.fillStyle = 'rgba(99, 102, 241, 0.3)'; gCtx.fill();
@@ -316,24 +323,22 @@
         function drawTree() {
             tCtx.clearRect(0, 0, treeCanvas.width, treeCanvas.height);
 
-            // Filter nodes that should be visible currently
             const visibleNodes = Object.values(dynamicTree).filter(n => n.level <= currentVisibleLevel);
 
-            // Draw Edges
+            // Edges
             visibleNodes.forEach(node => {
                 if (node.parent) {
                     const pNode = dynamicTree[node.parent];
                     tCtx.beginPath();
                     tCtx.moveTo(pNode.x, pNode.y + 12);
                     tCtx.lineTo(node.x, node.y - 12);
-                    
                     tCtx.strokeStyle = (node.level === currentVisibleLevel) ? '#6366f1' : '#475569';
                     tCtx.lineWidth = (node.level === currentVisibleLevel) ? 2 : 1.5;
                     tCtx.stroke();
                 }
             });
 
-            // Draw Nodes
+            // Nodes
             visibleNodes.forEach(node => {
                 const isActive = (node.level === currentVisibleLevel);
                 
@@ -343,9 +348,8 @@
                 if (node.isCycle) tCtx.strokeStyle = '#f59e0b';
                 if (node.isGoal) tCtx.strokeStyle = '#10b981';
 
-                // Shrink font size slightly for Depth 4 to fit in the pills
                 tCtx.font = currentTargetDepth === 4 ? 'bold 9px monospace' : 'bold 11px monospace';
-                const pathStr = node.path.join('→');
+                const pathStr = `${node.path.join('→')} [${node.cost}]`; // Added cumulative cost
                 const textWidth = tCtx.measureText(pathStr).width + 16;
                 
                 tCtx.beginPath();
@@ -375,7 +379,6 @@
         function switchTab(depth) {
             currentTargetDepth = depth;
             
-            // Tab styling update
             [2,3,4].forEach(d => {
                 const btn = document.getElementById(`tab-btn-${d}`);
                 btn.className = (d === depth) 
@@ -383,15 +386,10 @@
                     : "py-3 px-6 font-medium text-sm border-b-2 border-transparent text-gray-400 hover:text-gray-200 cursor-pointer";
             });
 
-            // Rebuild entire tree logic and layout
             dynamicTree = generateTreeData(currentTargetDepth);
             calculateTreeLayout(dynamicTree);
 
-            // Re-render math if necessary
-            if (window.MathJax && window.MathJax.typesetPromise) {
-                MathJax.typesetPromise();
-            }
-
+            if (window.MathJax && window.MathJax.typesetPromise) MathJax.typesetPromise();
             resetSim();
         }
 
@@ -402,7 +400,6 @@
                 drawGraph();
                 drawTree();
                 
-                // Check Completion
                 if (currentVisibleLevel === currentTargetDepth) {
                     btnStep.disabled = true;
                     btnStep.classList.replace('bg-indigo-600', 'bg-gray-700');
@@ -429,7 +426,6 @@
             drawTree();
         }
 
-        // Initialize Window
         window.addEventListener('resize', () => {
             if(Object.keys(dynamicTree).length > 0) {
                 calculateTreeLayout(dynamicTree);
@@ -440,9 +436,8 @@
 
         setTimeout(() => {
             lucide.createIcons();
-            switchTab(2); // Start with depth 2 by default
+            switchTab(2); 
         }, 200);
-
     </script>
 </body>
 </html>
